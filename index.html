@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Daily Log Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f3f4f6;
+            color: #111827;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        .line-green {
+            color: #06c755;
+        }
+
+        .bg-line-green {
+            background-color: #06c755;
+        }
+
+        .bg-line-dark {
+            background-color: #05a546;
+        }
+
+        :focus-visible {
+            outline: 3px solid rgba(6, 199, 85, 0.65);
+            outline-offset: 2px;
+        }
+
+        /* Assessment (A) Button Style */
+        .assess-btn-active {
+            background-color: #06c755 !important;
+            color: #ffffff !important;
+            border-color: #06c755 !important;
+        }
+
+        .assess-btn-active:hover {
+            background-color: #05a546 !important;
+            border-color: #05a546 !important;
+        }
+
+        .assess-btn-inactive {
+            background-color: #ffffff !important;
+            color: #4b5563 !important;
+            border-color: #d1d5db !important;
+        }
+
+        .assess-btn-inactive:hover {
+            background-color: #f3f4f6 !important;
+        }
+
+        /* DTX Type Button Style (Avoid Tailwind dynamic class issues on mobile) */
+        .dtx-btn-active {
+            background-color: #2563eb !important;
+            /* blue-600 */
+            color: #ffffff !important;
+            border-color: #2563eb !important;
+        }
+
+        .dtx-btn-active:hover {
+            background-color: #1d4ed8 !important;
+            /* blue-700 */
+            border-color: #1d4ed8 !important;
+        }
+
+        .dtx-btn-inactive {
+            background-color: #ffffff !important;
+            color: #1e40af !important;
+            /* blue-800 */
+        }
+
+        .dtx-btn-inactive:hover {
+            background-color: #eff6ff !important;
+            /* blue-50 */
+        }
+
+        /* Chrome, Safari, Edge, Opera - Remove inner spin button for number inputs */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        /* Time input: hide native picker icon to keep UI consistent with our button */
+        input[type="time"]::-webkit-calendar-picker-indicator {
+            opacity: 0;
+        }
+
+        /* Icon buttons: ensure perfect centering */
+        .icon-btn i {
+            line-height: 1;
+        }
+
+        .tab-active {
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.5rem;
+            border-bottom: 2px solid #06c755;
+            color: #06c755;
+            font-weight: bold;
+        }
+
+        .tab-inactive {
+            padding: 0.35rem 0.6rem;
+            border-radius: 0.5rem;
+            color: #374151;
+        }
+
+        #tabForm:hover,
+        #tabText:hover {
+            background-color: #e5e7eb;
+        }
+
+        /* Animations */
+        @keyframes pulse-once {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.95;
+                transform: scale(0.99);
+                background-color: #eff6ff;
+            }
+
+            /* Light blue flash */
+        }
+
+        .animate-pulse-once {
+            animation: pulse-once 0.5s ease-in-out;
+        }
+
+        /* NEW: Error Visualization Styles */
+        @keyframes shake {
+
+            10%,
+            90% {
+                transform: translate3d(-1px, 0, 0);
+            }
+
+            20%,
+            80% {
+                transform: translate3d(2px, 0, 0);
+            }
+
+            30%,
+            50%,
+            70% {
+                transform: translate3d(-4px, 0, 0);
+            }
+
+            40%,
+            60% {
+                transform: translate3d(4px, 0, 0);
+            }
+        }
+
+        .ring-error {
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.6) !important;
+            /* Red glow */
+            border-color: #ef4444 !important;
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-pulse-once {
+                animation: none !important;
+            }
+
+            .ring-error {
+                animation: none !important;
+            }
+        }
+    </style>
+</head>
+
+<body class="p-4 md:p-8 min-h-screen">
+
+    <!-- Hidden Date Picker Helper -->
+    <input type="date" id="hiddenDatePicker" class="hidden" onchange="applyDateSelection()">
+    <input type="hidden" id="dateTargetId">
+
+    <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden relative">
+        <!-- Header -->
+        <div class="bg-line-green p-4 text-white flex flex-wrap justify-between items-center gap-2">
+            <h1 class="text-xl font-bold"><i class="fas fa-notes-medical mr-2"></i>รายงานคนไข้รายวัน</h1>
+
+            <div class="flex flex-wrap gap-2 items-center">
+                <!-- Start Actions (Low-tech friendly) -->
+                <button onclick="openResetConfirmation()"
+                    class="bg-white text-green-800 hover:bg-green-50 px-4 py-2.5 rounded-lg text-base font-bold shadow transition flex items-center gap-2">
+                    <i class="fas fa-user-plus"></i> รับเคสใหม่
+                </button>
+                <button onclick="startExistingCase()"
+                    class="bg-white text-blue-800 hover:bg-blue-50 px-4 py-2.5 rounded-lg text-base font-bold shadow transition flex items-center gap-2 border border-blue-100">
+                    <i class="fas fa-clipboard-list"></i> รายงานเคสเดิม
+                </button>
+                <button onclick="openImportModal()"
+                    class="bg-yellow-400 text-yellow-950 hover:bg-yellow-300 px-4 py-2.5 rounded-lg text-base font-bold shadow transition flex items-center gap-2">
+                    <i class="fas fa-file-import"></i> นำเข้าจาก LINE
+                </button>
+
+                <!-- Font Size Controls (Easy Access) -->
+                <div class="bg-white/95 text-gray-900 rounded-lg p-0.5 flex items-center gap-1 shadow">
+                    <button type="button" onclick="stepFontSize(-1)"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
+                        aria-label="ลดขนาดตัวอักษร">A-</button>
+                    <button type="button" onclick="resetFontSize()"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
+                        aria-label="รีเซ็ตขนาดตัวอักษร">
+                        <span id="fontSizeLabel">16</span>
+                    </button>
+                    <button type="button" onclick="stepFontSize(1)"
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
+                        aria-label="เพิ่มขนาดตัวอักษร">A+</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <!-- Quick Guide (Low-tech friendly) -->
+            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <div
+                        class="w-10 h-10 rounded-full bg-white border border-gray-200 flex items-center justify-center flex-none">
+                        <i class="fas fa-lightbulb text-blue-700 text-lg"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-base font-bold text-gray-900">วิธีใช้แบบสั้น (สำหรับใช้งานเร็ว)</p>
+                        <ol class="mt-2 list-decimal list-inside space-y-1 text-base text-gray-900">
+                            <li>กรอก <span class="font-bold">ส่วนที่ 1</span> และระบุ <span
+                                    class="font-bold text-red-700">Allergy</span> (ถ้าไม่มีให้พิมพ์ “ปฏิเสธ” หรือ “-”)
+                            </li>
+                            <li>ตรวจสอบ <span class="font-bold">รายการยาปัจจุบัน</span> แล้วติ๊ก <span
+                                    class="font-bold">Verified</span></li>
+                            <li>เลือก <span class="font-bold">วันที่/เวลา</span> แล้วกรอกอาการวันนี้</li>
+                            <li>กดปุ่ม <span class="font-bold">สร้างข้อความ</span> (ถ้าขาดข้อมูล
+                                ระบบจะพาไปจุดที่ต้องกรอก)</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 1: Fixed Info -->
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div class="flex justify-between items-center mb-2 border-b border-gray-200 pb-2">
+                    <label class="block text-gray-700 font-bold text-lg"><i class="fas fa-user-injured mr-1"></i>
+                        ส่วนที่ 1: ข้อมูลคนไข้พื้นฐาน</label>
+                    <div class="flex text-base space-x-3">
+                        <button onclick="switchHeaderView('form')" id="tabForm"
+                            class="tab-active pb-1">แบบฟอร์ม</button>
+                        <button onclick="switchHeaderView('text')" id="tabText"
+                            class="tab-inactive pb-1">ข้อความดิบ</button>
+                    </div>
+                </div>
+
+                <!-- Form View -->
+                <div id="headerFormView" class="space-y-3">
+                    <div class="grid grid-cols-6 gap-3">
+                        <div class="col-span-4">
+                            <label class="block text-sm text-gray-800 font-semibold">ชื่อ-นามสกุล</label>
+                            <input type="text" id="pFName"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
+                                placeholder="นางสมศรี ดีใจ" oninput="updateHeaderFromForm()">
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm text-gray-800 font-semibold">อายุ (ปี)</label>
+                            <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int" id="pAge"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
+                                placeholder="75" oninput="updateHeaderFromForm()">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm text-gray-800 font-semibold">การวินิจฉัย (Dx)</label>
+                            <input type="text" id="pDx"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
+                                placeholder="DM, HT" oninput="updateHeaderFromForm()">
+                            <label class="block text-sm text-gray-800 font-semibold mt-2">ข้อบ่งชี้ในการ Admit</label>
+                            <input type="text" id="pIndication"
+                                class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
+                                placeholder="FBS 341 mg% / A1c 11.1" oninput="updateHeaderFromForm()">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-800 font-semibold">วันที่รับ Admit</label>
+                            <div class="flex relative">
+                                <input type="text" id="pAdmitDate"
+                                    class="w-full border border-gray-300 rounded-l-lg px-3 py-2 h-11 text-base"
+                                    placeholder="17 ธ.ค. 68" oninput="updateHeaderFromForm()">
+                                <!-- Date Picker Trigger -->
+                                <div class="relative">
+                                    <button type="button"
+                                        class="icon-btn bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg w-14 h-11 hover:bg-gray-200 text-gray-700 flex items-center justify-center">
+                                        <i class="far fa-calendar-alt"></i>
+                                    </button>
+                                    <input type="date" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                        onchange="handleDateChange(this, 'pAdmitDate')">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm text-red-700 font-semibold">ประวัติการแพ้ยา (Allergy) <span
+                                class="text-red-700">*</span></label>
+                        <input type="text" id="pAllergy"
+                            class="w-full border border-red-300 bg-red-50 rounded-lg px-3 py-2 h-11 text-base text-red-900 placeholder-red-400"
+                            placeholder="เช่น แพ้ Penicillin (ระบุได้จากหน้า Import)" oninput="updateHeaderFromForm()">
+                        <p id="allergyError" class="hidden mt-2 text-sm text-red-800 font-semibold" role="alert">
+                            กรุณาระบุประวัติการแพ้ยา หากไม่มีให้พิมพ์ “ปฏิเสธ” หรือ “-”
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Text View -->
+                <div id="headerTextView" class="hidden">
+                    <div class="bg-blue-50 border border-blue-200 rounded p-3 mb-2 flex flex-col gap-2">
+                        <div class="flex items-start gap-2">
+                            <i class="fas fa-magic text-blue-500 mt-1"></i>
+                            <div>
+                                <p class="text-sm text-blue-900 font-bold">ระบบซ่อมแซมอัตโนมัติ (Smart Repair):</p>
+                                <p class="text-sm text-blue-900">แก้ไขข้อความได้ตามสบาย
+                                    ระบบจะพยายามจับคู่ข้อมูลให้ถูกต้องเมื่อสลับกลับไปหน้าฟอร์ม
+                                    (แนะนำให้คงลำดับบรรทัดไว้: ชื่อ > โรค > วันที่ > ยา)</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button onclick="restoreTemplate()"
+                                class="text-sm bg-white border border-blue-300 text-blue-800 px-3 py-2 rounded-lg hover:bg-blue-50 shadow-sm flex items-center">
+                                <i class="fas fa-undo-alt mr-1"></i> คืนค่าโครงร่าง (Restore Template)
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="headerPart"
+                        class="w-full h-64 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-base font-mono"
+                        spellcheck="false" placeholder="พิมพ์ข้อมูลที่นี่..."></textarea>
+                </div>
+            </div>
+
+            <!-- Admit (OPD Card) -->
+            <div id="admitSection" class="hidden bg-amber-50 p-4 rounded-lg border border-amber-200 shadow-sm">
+                <div class="flex items-center justify-between mb-2 border-b border-amber-200 pb-2">
+                    <label class="block text-amber-900 font-bold text-lg"><i class="fas fa-hospital mr-1"></i>
+                        ข้อมูลแรกรับจาก OPD (OPD card)</label>
+                </div>
+
+                <input type="hidden" id="isAdmitMode" value="false">
+
+                <div class="space-y-4 mt-3">
+                    <!-- Admit Fields -->
+                    <div id="admitFields_container"
+                        class="hidden space-y-3 bg-amber-50 p-3 rounded border border-amber-200 border-l-4 border-l-amber-600 relative">
+                        <div
+                            class="absolute -top-3 left-3 bg-amber-100 text-amber-900 text-sm font-bold px-2 py-1 rounded border border-amber-200">
+                            ข้อมูลประวัติแรกรับ (Admission Note)
+                        </div>
+                        <div class="mt-2">
+                            <label class="block text-sm font-bold text-gray-800">CC (อาการสำคัญ)</label>
+                            <input type="text" id="inputCC"
+                                class="block w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base focus:ring-amber-200 focus:border-amber-400"
+                                placeholder="ตัวอย่าง: น้ำตาลสูง, หายใจเหนื่อย, ปวดท้อง, แผลติดเชื้อ"
+                                oninput="updateHeaderFromForm()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800">HPI (อาการปัจจุบัน)</label>
+                            <textarea id="inputHPI" rows="2"
+                                class="block w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-amber-200 focus:border-amber-400"
+                                placeholder="ตัวอย่าง: 2 วันก่อนมีไข้ ไอมากขึ้น วันนี้เหนื่อย"
+                                oninput="updateHeaderFromForm()"></textarea>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-800">PH (ความเจ็บป่วยก่อนหน้า)</label>
+                                <textarea id="inputPMH" rows="2"
+                                    class="block w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-amber-200 focus:border-amber-400"
+                                    placeholder="ตัวอย่าง: U/D, ประวัติการผ่าตัด, โรคประจำตัว"
+                                    oninput="updateHeaderFromForm()"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-800">FHx (ประวัติครอบครัว)</label>
+                                <textarea id="inputFHx" rows="2"
+                                    class="block w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-amber-200 focus:border-amber-400"
+                                    placeholder="ตัวอย่าง: พ่อ/แม่เป็น DM, HT, หัวใจ"
+                                    oninput="updateHeaderFromForm()"></textarea>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-700 text-right">*ข้อมูลแพ้ยาจะดึงมาจากส่วนที่ 1 (Header)
+                            โดยอัตโนมัติ</p>
+                    </div>
+
+                    <!-- Admit Plan -->
+                    <div id="admitPlan_container"
+                        class="hidden space-y-3 bg-amber-50 p-3 rounded border border-amber-200 border-l-4 border-l-amber-600 relative">
+                        <div
+                            class="absolute -top-3 right-3 bg-amber-100 text-amber-900 text-sm font-bold px-2 py-1 rounded border border-amber-200">
+                            แผนการรักษาแรกรับ (Admission Orders)
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-amber-900 mb-1"><i
+                                    class="fas fa-hourglass-half mr-1"></i> คำสั่งวันเดียว (One Day Order)</label>
+                            <textarea id="inputOneDay_Admit" rows="3"
+                                class="w-full border border-amber-200 rounded-lg p-3 text-base font-mono focus:ring-amber-200 focus:border-amber-500"
+                                placeholder="NSS 1000 ml IV 80 ml/hr..."
+                                onkeydown="handleBulletKeydown(event)"></textarea>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-end mb-1">
+                                <label class="block text-sm font-bold text-amber-900"><i
+                                        class="fas fa-sync-alt mr-1"></i> ยาต่อเนื่อง (Continuous Order)</label>
+                                <button onclick="copyAdmitMedsToHeader()"
+                                    class="text-sm bg-amber-100 text-amber-900 border border-amber-200 px-3 py-2 rounded-lg hover:bg-amber-200 transition flex items-center gap-2">
+                                    <i class="fas fa-arrow-up"></i> คัดลอกไปรายการยาปัจจุบัน
+                                </button>
+                            </div>
+                            <textarea id="inputCont_Admit" rows="4"
+                                class="w-full border border-amber-200 rounded-lg p-3 text-base font-mono focus:ring-amber-200 focus:border-amber-500"
+                                placeholder="DTX premeal ช ย&#10;Novomix 18-0-8 sc ac ช ย #1&#10;Simvastatin (20) 1x1 o hs #30"
+                                onkeydown="handleBulletKeydown(event)"></textarea>
+                            <p class="text-sm text-gray-700 mt-1">*พิมพ์คำสั่งยาที่นี่
+                                แล้วกดปุ่มด้านบนเพื่ออัปเดตรายการยาใน Header</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-800 mb-1"><i
+                                    class="fas fa-user-md mr-1"></i> แผนแรกรับ (Plan/Management)</label>
+                            <p
+                                class="text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-2">
+                                ใช้เฉพาะตอนแรกรับ (Admit) หากเป็นบันทึกรายวันให้ปิดโหมดแรกรับก่อน
+                            </p>
+                            <textarea id="inputPlanMx_Admit" rows="3"
+                                class="w-full border border-gray-300 rounded-lg p-3 text-base focus:ring-gray-200 focus:border-gray-500"
+                                placeholder="- Admit ward...
+- Consult..." onkeydown="handleBulletKeydown(event)"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Previous Logs -->
+            <div id="historyContainer" class="bg-gray-50 p-4 rounded-lg border border-gray-200 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-3">
+                        <label class="block text-gray-700 font-bold text-lg"><i class="fas fa-history mr-1"></i> ส่วนที่
+                            2: ประวัติอาการเดิม</label>
+                        <!-- Lock Toggle Button -->
+                        <button onclick="toggleHistoryLock()" id="btnHistoryLock"
+                            class="text-sm font-bold bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-full transition flex items-center gap-2 shadow-sm border border-gray-300">
+                            <i class="fas fa-lock text-xs"></i> ล็อก
+                        </button>
+                    </div>
+                    <button onclick="toggleHistory()"
+                        class="text-sm text-blue-700 underline px-2 py-1 rounded hover:bg-blue-50">ซ่อน</button>
+                </div>
+                <!-- Default State: Readonly & Gray Background -->
+                <textarea id="historyPart" readonly
+                    class="w-full h-40 p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 text-base font-mono bg-gray-100 text-gray-600 cursor-not-allowed transition-colors duration-200"
+                    placeholder="ประวัติเก่าจะปรากฏที่นี่ (ปลดล็อกเพื่อแก้ไข)..."></textarea>
+            </div>
+
+            <div id="showHistoryBtn" class="text-center hidden">
+                <button onclick="toggleHistory()"
+                    class="text-base text-gray-700 hover:text-gray-900 underline border border-dashed border-gray-300 px-5 py-2 rounded-full bg-white">
+                    <i class="fas fa-plus-circle mr-1"></i> แสดงประวัติอาการเดิม
+                </button>
+            </div>
+
+            <!-- Section 3: New Entry -->
+            <div id="dailyEntrySection" class="bg-blue-50 p-4 rounded-lg border border-blue-200 shadow-sm relative">
+                <div class="flex justify-between items-center mb-4">
+                    <label class="block text-blue-800 font-bold text-lg"><i class="fas fa-edit mr-1"></i>
+                        บันทึกอาการวันนี้ (ใหม่)</label>
+                    <button onclick="openClearFormConfirmation()"
+                        class="text-sm text-blue-700 hover:text-blue-900 underline px-2 py-1 rounded hover:bg-blue-100">ล้างฟอร์มวันนี้</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div>
+                        <label class="block text-base font-semibold text-gray-800 mb-1">วันที่</label>
+                        <div class="flex relative">
+                            <input type="text" id="logDate"
+                                class="block w-full border border-gray-300 rounded-l-lg shadow-sm px-3 py-2 h-11 text-base text-center font-bold text-gray-800">
+                            <div class="relative">
+                                <button type="button"
+                                    class="icon-btn bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg w-14 h-11 hover:bg-gray-200 text-gray-700 shadow-sm flex items-center justify-center"
+                                    aria-label="เลือกวันที่">
+                                    <i class="far fa-calendar-alt"></i>
+                                </button>
+                                <input type="date" class="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                                    onchange="handleDateChange(this, 'logDate')">
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-base font-semibold text-gray-800 mb-1">เวลา <span
+                                class="text-red-700 text-sm">(ต้องเลือก)</span></label>
+                        <div id="timePickerGroup" class="flex flex-col gap-2">
+                            <div class="flex relative">
+                                <input type="time" id="logTime"
+                                    class="block w-full border border-gray-300 rounded-l-lg shadow-sm px-3 py-2 h-11 text-base text-center font-bold text-gray-800"
+                                    aria-label="เวลาในการบันทึก">
+                                <button type="button" onclick="openTimePicker('logTime')"
+                                    class="icon-btn bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg w-14 h-11 hover:bg-gray-200 text-gray-700 shadow-sm flex items-center justify-center"
+                                    aria-label="เลือกเวลา">
+                                    <i class="far fa-clock"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+
+                    <!-- Standard S (Always Visible) -->
+                    <div id="standardS_container">
+                        <label class="block text-sm font-bold text-blue-600 mb-1">S (Subjective -
+                            อาการปัจจุบัน):</label>
+                        <input type="text" id="inputS"
+                            class="block w-full border border-gray-300 rounded-lg shadow-sm px-3 py-2 h-11 text-base"
+                            placeholder="อาการที่คนไข้บอกขณะนี้ หรือ Notify Ward เช่น รู้สึกตัวดี, บ่นปวดแผล">
+                    </div>
+
+                    <!-- V/S Helper (Restored White Wrapper, Label Outside) -->
+                    <div>
+                        <label class="block text-sm font-bold text-blue-600 mb-1">O (Objective):</label>
+
+                        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm">
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                                <!-- BT: Orange -->
+                                <div class="relative">
+                                    <label class="block text-sm text-center font-bold text-orange-700 mb-1">
+                                        <i class="fas fa-thermometer-half mr-1"></i>BT<br>
+                                        <span class="text-sm text-gray-700 font-normal">อุณหภูมิ</span>
+                                    </label>
+                                    <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
+                                        data-numeric="decimal1" id="valT"
+                                        class="w-full border-2 border-orange-100 focus:border-orange-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-orange-200">
+                                </div>
+                                <!-- PR: Red -->
+                                <div class="relative">
+                                    <label class="block text-sm text-center font-bold text-red-700 mb-1">
+                                        <i class="fas fa-heartbeat mr-1"></i>PR<br>
+                                        <span class="text-sm text-gray-700 font-normal">ชีพจร</span>
+                                    </label>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int" id="valP"
+                                        class="w-full border-2 border-red-100 focus:border-red-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-red-200">
+                                </div>
+                                <!-- RR: Blue -->
+                                <div class="relative">
+                                    <label class="block text-sm text-center font-bold text-cyan-700 mb-1">
+                                        <i class="fas fa-lungs mr-1"></i>RR<br>
+                                        <span class="text-sm text-gray-700 font-normal">หายใจ</span>
+                                    </label>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int" id="valR"
+                                        class="w-full border-2 border-cyan-100 focus:border-cyan-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-cyan-200">
+                                </div>
+                                <!-- BP: Purple -->
+                                <div class="relative">
+                                    <label class="block text-sm text-center font-bold text-indigo-700 mb-1">
+                                        <i class="fas fa-tachometer-alt mr-1"></i>BP<br>
+                                        <span class="text-sm text-gray-700 font-normal">ความดัน</span>
+                                    </label>
+                                    <input type="text" id="valBP"
+                                        class="w-full border-2 border-indigo-100 focus:border-indigo-500 rounded-lg h-11 p-2 pr-12 text-base text-center bg-white focus:ring-2 focus:ring-indigo-200"
+                                        placeholder="เช่น 189/104" oninput="updateBpCountBadge()">
+                                    <button type="button" onclick="openBpModal()"
+                                        class="absolute right-2 bottom-2 w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 hover:bg-indigo-100 flex items-center justify-center shadow-sm relative"
+                                        aria-label="บันทึก BP หลายครั้ง">
+                                        <i class="fas fa-plus"></i>
+                                        <span id="bpCountBadge"
+                                            class="hidden absolute -top-2 -right-2 bg-indigo-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div
+                                class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3 pt-2 border-t border-dashed border-gray-200">
+                                <!-- Updated DTX Section (Clean Design - No Box) -->
+                                <div class="relative">
+                                    <label class="block text-sm font-bold text-blue-700 mb-1">DTX (mg%)</label>
+                                    <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
+                                        id="valDTX"
+                                        class="w-full border-2 border-blue-100 focus:border-blue-500 rounded-lg h-11 p-2 text-base text-center mb-2 placeholder-blue-400"
+                                        placeholder="ระบุค่า">
+
+                                    <div class="flex gap-1 items-center">
+                                        <!-- DTX Type Buttons (Replaced Dropdown) -->
+                                        <div class="flex-1 flex shadow-sm rounded-md" role="group"
+                                            id="dtxTypeButtonGroup" aria-label="เลือกประเภท DTX">
+                                            <button type="button" onclick="setDtxType('AC')" id="btnDtxAC"
+                                                aria-pressed="false"
+                                                class="flex-1 px-3 py-3 text-base font-bold border border-blue-300 rounded-l focus:z-10 dtx-btn-inactive">ก่อน</button>
+                                            <button type="button" onclick="setDtxType('PC')" id="btnDtxPC"
+                                                aria-pressed="false"
+                                                class="flex-1 px-3 py-3 text-base font-bold border-t border-b border-r border-blue-300 focus:z-10 dtx-btn-inactive">หลัง</button>
+                                            <button type="button" onclick="setDtxType('R')" id="btnDtxR"
+                                                aria-pressed="false"
+                                                class="flex-1 px-3 py-3 text-base font-bold border border-blue-300 rounded-r focus:z-10 dtx-btn-inactive">สุ่ม</button>
+                                        </div>
+                                        <input type="hidden" id="dtxType" value="">
+
+                                        <div class="relative w-16">
+                                            <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
+                                                id="valDTX_Hr"
+                                                class="w-full border border-gray-300 rounded-lg text-sm text-center bg-white focus:ring-1 focus:ring-blue-200 focus:border-blue-500 h-10 pr-6"
+                                                placeholder="?">
+                                            <span
+                                                class="absolute right-2 top-2 text-xs text-gray-600 pointer-events-none">ชม.</span>
+                                        </div>
+                                    </div>
+                                    <p id="dtxTypeError" class="hidden mt-2 text-sm text-red-800 font-semibold"
+                                        role="alert">
+                                        กรุณาเลือกประเภท DTX: ก่อน / หลัง / สุ่ม
+                                    </p>
+                                </div>
+
+                                <div class="flex flex-col gap-3">
+                                    <div>
+                                        <label class="block text-sm text-gray-800 font-bold mb-1">SpO2</label>
+                                        <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
+                                            id="valSpO2"
+                                            class="w-full border border-gray-300 rounded-lg h-11 p-2 text-base text-center bg-white"
+                                            placeholder="%">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label class="block text-sm text-gray-800 text-center">ปัสสาวะ</label>
+                                            <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
+                                                id="valUrine"
+                                                class="w-full border border-gray-300 rounded-lg h-11 p-2 text-base text-center bg-white">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm text-gray-800 text-center">ถ่าย</label>
+                                            <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
+                                                id="valStool"
+                                                class="w-full border border-gray-300 rounded-lg h-11 p-2 text-base text-center bg-white">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="border-t border-gray-100 pt-2 mt-2">
+                                <label class="block text-sm text-gray-800 mb-1">ข้อมูล O อื่นๆ</label>
+                                <textarea id="inputO_Extra" rows="2"
+                                    class="w-full border border-gray-300 rounded-lg p-3 text-base bg-gray-50"
+                                    placeholder="ผล Lab หรืออื่นๆ..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A/P Section (Dynamic) -->
+                    <div>
+                        <label id="apSectionTitle" class="block text-sm font-bold text-blue-600 mb-1">A (Assessment) / P
+                            (Plan):</label>
+
+                        <!-- A (Assessment) -->
+                        <div class="bg-white rounded-lg border border-gray-200 p-3 shadow-sm mb-3">
+                            <label class="block text-sm font-bold text-gray-800 mb-2">A (Assessment)</label>
+                            <div class="flex shadow-sm rounded-md" role="group" id="assessmentButtonGroup"
+                                aria-label="เลือก Assessment">
+                                <button type="button" onclick="setAssessmentStatus('ดีขึ้น')" id="btnAssessBetter"
+                                    aria-pressed="false"
+                                    class="flex-1 px-3 py-3 text-base font-bold border rounded-l focus:z-10 assess-btn-inactive">ดีขึ้น</button>
+                                <button type="button" onclick="setAssessmentStatus('แย่ลง')" id="btnAssessWorse"
+                                    aria-pressed="false"
+                                    class="flex-1 px-3 py-3 text-base font-bold border-t border-b border-r focus:z-10 assess-btn-inactive">แย่ลง</button>
+                                <button type="button" onclick="setAssessmentStatus('พอเดิม')" id="btnAssessSame"
+                                    aria-pressed="false"
+                                    class="flex-1 px-3 py-3 text-base font-bold border rounded-r focus:z-10 assess-btn-inactive">พอเดิม</button>
+                            </div>
+                            <input type="hidden" id="assessmentStatus" value="">
+
+                            <div class="mt-2 flex items-center gap-3">
+                                <input type="checkbox" id="assessmentRisk"
+                                    class="w-6 h-6 text-red-600 rounded focus:ring-red-500 border-gray-300">
+                                <label for="assessmentRisk"
+                                    class="text-sm font-bold text-gray-800 cursor-pointer select-none">
+                                    เสี่ยงภาวะแทรกซ้อน
+                                </label>
+                            </div>
+                        </div>
+
+                        <label id="planLabel" class="block text-sm font-bold text-gray-800 mb-1">P (Plan)</label>
+
+                        <!-- Standard A/P (Shown when NOT in Admit Mode) -->
+                        <div id="standardAP_container">
+                            <textarea id="inputAP" rows="4"
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm p-3 text-base focus:ring-blue-200 focus:border-blue-500"
+                                placeholder="พิมพ์แผนการรักษา (1 บรรทัด = 1 ข้อ)\nเช่น เจาะเลือดพรุ่งนี้เช้า"
+                                onkeydown="handleBulletKeydown(event)"></textarea>
+                        </div>
+
+                        <div id="admitPlanHint"
+                            class="hidden mt-2 bg-amber-50 border border-amber-200 border-l-4 border-l-amber-600 text-amber-900 rounded-lg px-3 py-2 text-base font-bold flex items-center gap-2">
+                            <i class="fas fa-arrow-up"></i> กรอก Admission Orders ในส่วน “ข้อมูลแรกรับจาก OPD” ด้านบน
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Single Continuous Order Block (MOVED HERE) -->
+            <div class="bg-white p-3 rounded border-2 border-green-100 shadow-sm transition duration-300 mt-4"
+                id="medsContainer">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-base font-bold text-green-800"><i class="fas fa-pills mr-1"></i>
+                        รายการยาปัจจุบัน (Continuous Order)</label>
+                    <span id="medsStatusBadge"
+                        class="text-sm px-3 py-1 rounded-full bg-red-100 text-red-700 font-bold border border-red-200 shadow-sm">
+                        <i class="fas fa-exclamation-circle"></i> รอการตรวจสอบ
+                    </span>
+                </div>
+
+                <p class="text-sm text-gray-700 mb-2">
+                    <i class="fas fa-info-circle text-blue-400"></i> ตรวจสอบยาครั้งสุดท้ายก่อนสร้าง
+                    (ข้อมูลนี้จะไปแสดงในส่วน Header)<br>
+                </p>
+                <textarea id="pMedsCont" rows="6"
+                    class="w-full border border-gray-300 rounded-lg p-3 text-base placeholder-gray-400 font-mono mb-2 focus:ring-2 focus:ring-green-200 focus:border-green-500 outline-none transition"
+                    placeholder="ตัวอย่าง:
+• DrugName A 500mg 1x3 pc
+• DrugName B 10mg 1x1 hs
+(พิมพ์รายการยาที่นี่)" oninput="handleMedsInput()" onkeydown="handleBulletKeydown(event)"></textarea>
+
+                <!-- Verification Checkbox -->
+                <div class="flex items-center bg-gray-50 p-2 rounded border border-gray-200 hover:bg-white cursor-pointer transition select-none"
+                    onclick="toggleMedsCheckFromRow()">
+                    <input type="checkbox" id="medsVerified"
+                        class="w-6 h-6 text-green-600 rounded focus:ring-green-500 border-gray-300 mr-3 cursor-pointer"
+                        onchange="updateMedsStatus(event)">
+                    <label for="medsVerified" class="text-base font-bold text-gray-800 cursor-pointer">
+                        ยืนยันว่ารายการยาถูกต้อง/เป็นปัจจุบันแล้ว (Verified)
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="generateLog()"
+                class="w-full bg-line-green hover:bg-line-dark text-white font-bold py-4 px-4 rounded-lg shadow transition duration-200 flex justify-center items-center gap-2 text-xl">
+                <i class="fas fa-magic"></i> สร้างข้อความ
+            </button>
+
+            <div id="resultSection" class="hidden">
+                <div class="relative bg-gray-100 p-4 rounded-lg border border-gray-300">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">Preview:</label>
+                    <textarea id="outputArea"
+                        class="w-full h-64 bg-white p-3 text-base font-mono border rounded-lg focus:outline-none"
+                        readonly></textarea>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="copyToClipboard()"
+                            class="flex-1 bg-gray-800 hover:bg-gray-900 text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 text-base">
+                            <i class="fas fa-copy"></i> คัดลอก
+                        </button>
+                        <button onclick="shareToLine()"
+                            class="flex-1 bg-line-green hover:bg-line-dark text-white font-bold py-3 px-4 rounded-lg flex justify-center items-center gap-2 text-base">
+                            <i class="fa-brands fa-line"></i> แชร์ LINE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="importModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative bg-white w-full max-w-lg rounded-xl shadow-2xl p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-2"><i class="fas fa-file-import text-yellow-500 mr-2"></i>
+                นำเข้าข้อมูลจาก LINE</h2>
+            <p class="text-sm text-gray-600 mb-3">วางข้อความทั้งหมดที่ Copy มาจาก LINE เพื่ออัปเดตยาและประวัติล่าสุด</p>
+            <textarea id="importText" rows="10"
+                class="w-full border-2 border-gray-200 rounded-lg p-3 text-base font-mono focus:border-yellow-500 focus:ring-0"
+                placeholder="วางข้อความทั้งหมดที่นี่..."></textarea>
+            <div class="flex justify-end space-x-3 mt-4">
+                <button onclick="closeImportModal()"
+                    class="px-5 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-bold">ยกเลิก</button>
+                <button onclick="processImport()"
+                    class="px-5 py-3 bg-yellow-400 text-yellow-950 font-bold rounded-lg hover:bg-yellow-300">ตกลง
+                    นำเข้าข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW CASE CONFIRM MODAL (Fixes the issue with blocked confirm()) -->
+    <div id="newCaseModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all scale-100">
+            <div class="text-center">
+                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                    <i class="fas fa-user-plus text-green-600 text-xl"></i>
+                </div>
+                <h3 class="text-lg leading-6 font-bold text-gray-900" id="modal-title">เริ่มเคสใหม่?</h3>
+                <div class="mt-2">
+                    <p class="text-base text-gray-700">ข้อมูลปัจจุบันทั้งหมดจะถูกล้างหายไป เพื่อเตรียมรับผู้ป่วยรายใหม่
+                    </p>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-6 grid grid-cols-2 gap-3">
+                <button type="button" onclick="closeConfirmation()"
+                    class="w-full inline-flex justify-center rounded-lg border border-gray-300 shadow-sm px-5 py-3 bg-white text-base font-bold text-gray-800 hover:bg-gray-50 focus:outline-none">
+                    ยกเลิก
+                </button>
+                <button type="button" onclick="executeNewCase()"
+                    class="w-full inline-flex justify-center rounded-lg border border-transparent shadow-sm px-5 py-3 bg-green-600 text-base font-bold text-white hover:bg-green-700 focus:outline-none">
+                    ยืนยัน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CLEAR FORM CONFIRM MODAL -->
+    <div id="clearFormModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
+            <h3 class="text-lg font-bold text-gray-900 mb-2">ล้างฟอร์มวันนี้?</h3>
+            <p class="text-base text-gray-700 mb-4">ข้อมูลอาการที่กรอกวันนี้จะหายไป (Header และประวัติเดิมยังอยู่)</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="closeConfirmation()"
+                    class="w-full rounded-lg border border-gray-300 px-5 py-3 bg-white text-gray-800 hover:bg-gray-50 font-bold">ยกเลิก</button>
+                <button onclick="executeClearForm()"
+                    class="w-full rounded-lg border border-transparent px-5 py-3 bg-red-600 text-white hover:bg-red-700 font-bold">ล้างข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GENERATE CONFIRM MODAL (Safety Check) -->
+    <div id="safetyCheckModal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 border-l-4 border-red-500">
+            <h3 class="text-lg font-bold text-red-600 mb-2"><i
+                    class="fas fa-exclamation-triangle mr-2"></i>คำเตือนความปลอดภัย</h3>
+            <p class="text-base text-gray-800 mb-4">คุณยังไม่ได้ติ๊ก 'ยืนยัน' รายการยา Continuous Order</p>
+            <div class="flex flex-col gap-2">
+                <button onclick="confirmSafetyCheck()"
+                    class="w-full rounded-lg bg-green-600 text-white px-5 py-3 hover:bg-green-700 font-bold text-base">ยืนยันว่ายาถูกต้อง
+                    (ดำเนินการต่อ)</button>
+                <button onclick="cancelSafetyCheck()"
+                    class="w-full rounded-lg bg-gray-200 text-gray-800 px-5 py-3 hover:bg-gray-300 font-bold text-base">กลับไปตรวจสอบ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- BP MULTI MEASURE MODAL -->
+    <div id="bpModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="relative bg-white w-full max-w-md rounded-xl shadow-2xl p-6 mx-4">
+            <div class="flex items-start justify-between gap-3">
+                <h3 class="text-lg font-bold text-gray-900">
+                    <i class="fas fa-tachometer-alt text-indigo-600 mr-2"></i>บันทึก BP หลายครั้ง
+                </h3>
+                <button type="button" onclick="closeBpModal()"
+                    class="text-gray-500 hover:text-gray-800 text-2xl leading-none" aria-label="ปิด">×</button>
+            </div>
+            <p class="text-sm text-gray-700 mt-1">ใส่ค่าความดันได้หลายครั้ง เช่น 189/104 (ระบบจะเอาไปแสดงในบรรทัด O:)
+            </p>
+
+            <div id="bpListContainer" class="mt-4 space-y-2"></div>
+
+            <button type="button" onclick="addBpRow()"
+                class="mt-3 w-full bg-indigo-50 hover:bg-indigo-100 text-indigo-900 border border-indigo-200 font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i> เพิ่มการวัด
+            </button>
+
+            <div class="mt-4 grid grid-cols-2 gap-3">
+                <button type="button" onclick="closeBpModal()"
+                    class="w-full rounded-lg border border-gray-300 px-5 py-3 bg-white text-gray-800 hover:bg-gray-50 font-bold">ยกเลิก</button>
+                <button type="button" onclick="saveBpReadings()"
+                    class="w-full rounded-lg border border-transparent px-5 py-3 bg-indigo-600 text-white hover:bg-indigo-700 font-bold">บันทึก</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast"
+        class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-lg transform transition-all duration-300 z-50 text-base max-w-[90vw]"
+        role="status" aria-live="polite">
+        <i id="toastIcon" class="fas fa-check-circle mr-2" style="color:#86efac"></i> <span
+            id="toastMsg">Success!</span>
+    </div>
+
+    <script>
+        const defaultHeader = [
+            `ผู้ป่วย: ... (อายุ ... ปี)`,
+            `Dx: ...`,
+            `Indication: ...`,
+            `วันที่รับ: ...`,
+            `CC: ...`,
+            `HPI: ...`,
+            `PH: ...`,
+            `FHx: ...`,
+            `Allergy: ...`,
+            `==============`,
+            `💊 ยาที่ใช้ปัจจุบัน (ยังไม่มีรายการยา)`,
+            `• ...`
+        ].join('\n');
+
+        const blankTemplate = [
+            `ผู้ป่วย: ... (อายุ ... ปี)`,
+            `Dx: ...`,
+            `Indication: ...`,
+            `วันที่รับ: ...`,
+            `CC: ...`,
+            `HPI: ...`,
+            `PH: ...`,
+            `FHx: ...`,
+            `Allergy: ...`,
+            `==============`,
+            `💊 ยาที่ใช้ปัจจุบัน`,
+            `• ...`
+        ].join('\n');
+        const defaultHistory = ``;
+
+        function sanitizeNumericInput(input) {
+            const mode = input?.dataset?.numeric;
+            if (!mode) return;
+
+            const before = input.value;
+            let after = before;
+
+            if (mode === 'int') {
+                after = before.replace(/\D+/g, '');
+            } else if (mode === 'decimal1') {
+                after = before.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                if (after.startsWith('.')) after = '0' + after;
+                const dotIndex = after.indexOf('.');
+                if (dotIndex !== -1) {
+                    const intPart = after.slice(0, dotIndex);
+                    const fracPart = after.slice(dotIndex + 1).replace(/\./g, '');
+                    after = intPart + '.' + fracPart.slice(0, 1);
+                }
+            }
+
+            if (after !== before) input.value = after;
+
+            // If DTX value is cleared, reset DTX type selection (no default)
+            if (input.id === 'valDTX' && !input.value.trim()) {
+                setDtxType('');
+            }
+        }
+
+        function initNumericInputs() {
+            document.querySelectorAll('input[data-numeric]').forEach((input) => {
+                input.addEventListener('input', () => sanitizeNumericInput(input));
+                sanitizeNumericInput(input);
+            });
+        }
+
+        // --- Font Size Controls (Accessibility) ---
+        const FONT_SIZE_STORAGE_KEY = 'patientLog_fontSizePx';
+        const FONT_SIZE_STEPS = [14, 15, 16, 17, 18, 19, 20, 21, 22];
+        const DEFAULT_FONT_SIZE_PX = 16;
+
+        function updateFontSizeLabel(px) {
+            const label = document.getElementById('fontSizeLabel');
+            if (!label) return;
+            label.textContent = String(px);
+        }
+
+        function applyFontSizePx(px, { persist = true, announce = true } = {}) {
+            const safePx = Number.isFinite(px) ? px : DEFAULT_FONT_SIZE_PX;
+            const clampedPx = Math.max(FONT_SIZE_STEPS[0], Math.min(FONT_SIZE_STEPS[FONT_SIZE_STEPS.length - 1], safePx));
+
+            document.documentElement.style.fontSize = `${clampedPx}px`;
+            updateFontSizeLabel(clampedPx);
+
+            if (persist) localStorage.setItem(FONT_SIZE_STORAGE_KEY, String(clampedPx));
+            if (announce) showToast(`ขนาดตัวอักษร: ${clampedPx}`, 'info');
+        }
+
+        function getClosestFontSizeIndex(px) {
+            let bestIndex = 0;
+            let bestDiff = Infinity;
+            FONT_SIZE_STEPS.forEach((s, i) => {
+                const diff = Math.abs(s - px);
+                if (diff < bestDiff) { bestDiff = diff; bestIndex = i; }
+            });
+            return bestIndex;
+        }
+
+        function stepFontSize(direction) {
+            const current = parseInt(getComputedStyle(document.documentElement).fontSize, 10) || DEFAULT_FONT_SIZE_PX;
+            const currentIndex = getClosestFontSizeIndex(current);
+            const nextIndex = Math.max(0, Math.min(FONT_SIZE_STEPS.length - 1, currentIndex + (direction < 0 ? -1 : 1)));
+            applyFontSizePx(FONT_SIZE_STEPS[nextIndex], { persist: true, announce: true });
+        }
+
+        function resetFontSize() {
+            localStorage.removeItem(FONT_SIZE_STORAGE_KEY);
+            document.documentElement.style.fontSize = `${DEFAULT_FONT_SIZE_PX}px`;
+            updateFontSizeLabel(DEFAULT_FONT_SIZE_PX);
+            showToast('รีเซ็ตขนาดตัวอักษรแล้ว', 'info');
+        }
+
+        function initFontSize() {
+            const saved = parseInt(localStorage.getItem(FONT_SIZE_STORAGE_KEY) || '', 10);
+            if (Number.isFinite(saved) && saved > 0) {
+                applyFontSizePx(saved, { persist: false, announce: false });
+            } else {
+                document.documentElement.style.fontSize = `${DEFAULT_FONT_SIZE_PX}px`;
+                updateFontSizeLabel(DEFAULT_FONT_SIZE_PX);
+            }
+        }
+
+        function handleMedsInput() {
+            document.getElementById('medsVerified').checked = false;
+            updateMedsStatus();
+            updateHeaderFromForm();
+        }
+
+        function toggleMedsCheckFromRow() {
+            const checkbox = document.getElementById('medsVerified');
+            checkbox.checked = !checkbox.checked;
+            updateMedsStatus();
+        }
+
+        function updateMedsStatus(e) {
+            if (e) e.stopPropagation();
+            const isChecked = document.getElementById('medsVerified').checked;
+            const container = document.getElementById('medsContainer');
+            const badge = document.getElementById('medsStatusBadge');
+
+            if (isChecked) {
+                container.classList.remove('border-red-300', 'bg-red-50');
+                container.classList.add('border-green-400', 'bg-green-50');
+                badge.className = "text-sm px-3 py-1 rounded-full bg-green-100 text-green-800 font-bold border border-green-200 shadow-sm";
+                badge.innerHTML = '<i class="fas fa-check-circle"></i> ตรวจสอบแล้ว';
+            } else {
+                container.classList.remove('border-green-400', 'bg-green-50');
+                container.classList.add('border-red-300', 'bg-red-50');
+                badge.className = "text-sm px-3 py-1 rounded-full bg-red-100 text-red-700 font-bold border border-red-200 shadow-sm";
+                badge.innerHTML = '<i class="fas fa-exclamation-circle"></i> รอการตรวจสอบ';
+            }
+        }
+
+        function openImportModal() { document.getElementById('importModal').classList.remove('hidden'); document.getElementById('importText').value = ''; }
+        function closeImportModal() { document.getElementById('importModal').classList.add('hidden'); }
+
+        function processImport() {
+            const text = document.getElementById('importText').value;
+            if (!text.trim()) return;
+            handleFullTextImport(text);
+            closeImportModal();
+            document.getElementById('medsVerified').checked = false;
+            updateMedsStatus();
+            showToast("นำเข้าข้อมูลเรียบร้อย! กรุณาตรวจสอบยาอีกครั้ง", "warning");
+        }
+
+        function handleFullTextImport(text) {
+            const markerRegex = /\n={10,}\n\(ส่วนที่ 2: บันทึกอาการรายวัน\)\n?/m;
+            const match = text.match(markerRegex);
+
+            let newHeader = "";
+            let newHistory = "";
+            if (match && typeof match.index === 'number') {
+                newHeader = text.slice(0, match.index).trim();
+                newHistory = text.slice(match.index + match[0].length).trim();
+            } else {
+                newHeader = text.trim();
+            }
+
+            // AUTOMATIC ALLERGY DETECTION
+            // Look for "Allergy" or "แพ้ยา" patterns in the FULL text, not just header
+            const allergyMatch = text.match(/(?:แพ้ยา|Allergy)[\s:]*([^\n]+)/i);
+            if (allergyMatch && allergyMatch[1]) {
+                const detectedAllergy = allergyMatch[1].trim();
+                // Update form field directly to ensure it sticks
+                const allergyInput = document.getElementById('pAllergy');
+                // Only update if current field is empty or contains "..." (placeholder)
+                if (!allergyInput.value || allergyInput.value.includes("...")) {
+                    allergyInput.value = detectedAllergy;
+                }
+            }
+
+            document.getElementById('headerPart').value = newHeader;
+            if (newHistory) document.getElementById('historyPart').value = newHistory;
+            saveData();
+            switchHeaderView('text');
+            checkHistoryVisibility();
+        }
+
+        document.getElementById('hiddenDatePicker').style.display = 'block';
+        document.getElementById('hiddenDatePicker').style.position = 'absolute';
+        document.getElementById('hiddenDatePicker').style.opacity = '0';
+        document.getElementById('hiddenDatePicker').style.height = '0';
+        document.getElementById('hiddenDatePicker').style.width = '0';
+        document.getElementById('hiddenDatePicker').style.bottom = '0';
+        document.getElementById('hiddenDatePicker').style.left = '0';
+
+        function handleDateChange(input, targetId) {
+            document.getElementById('dateTargetId').value = targetId;
+            document.getElementById('hiddenDatePicker').value = input.value;
+            applyDateSelection();
+        }
+
+        function applyDateSelection() {
+            const dateVal = document.getElementById('hiddenDatePicker').value;
+            if (!dateVal) return;
+            const targetId = document.getElementById('dateTargetId').value;
+            const targetInput = document.getElementById(targetId);
+            const parts = dateVal.split('-');
+            const yearAD = parseInt(parts[0]);
+            const month = parts[1];
+            const day = parts[2];
+            const yearBE = (yearAD + 543).toString().slice(-2);
+
+            const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const mIndex = parseInt(month) - 1;
+            targetInput.value = `${parseInt(day)} ${months[mIndex]} ${yearBE}`;
+
+            if (targetId === 'pAdmitDate') updateHeaderFromForm();
+        }
+
+        // NEW: Function to handle DTX Type Buttons
+        function setDtxType(type) {
+            const allowed = ['AC', 'PC', 'R'];
+            const normalized = allowed.includes(type) ? type : '';
+
+            document.getElementById('dtxType').value = normalized;
+            const btnIds = { AC: 'btnDtxAC', PC: 'btnDtxPC', R: 'btnDtxR' };
+            const activeClass = 'dtx-btn-active';
+            const inactiveClass = 'dtx-btn-inactive';
+
+            allowed.forEach((t) => {
+                const btn = document.getElementById(btnIds[t]);
+                if (!btn) return;
+
+                btn.classList.remove(activeClass, inactiveClass);
+                if (t === normalized) {
+                    btn.classList.add(activeClass);
+                    btn.setAttribute('aria-pressed', 'true');
+                } else {
+                    btn.classList.add(inactiveClass);
+                    btn.setAttribute('aria-pressed', 'false');
+                }
+            });
+
+            const dtxVal = document.getElementById('valDTX')?.value?.trim() || '';
+            const dtxGroup = document.getElementById('dtxTypeButtonGroup');
+            const dtxError = document.getElementById('dtxTypeError');
+            if (normalized || !dtxVal) {
+                if (dtxGroup) dtxGroup.classList.remove('ring-error');
+                if (dtxError) dtxError.classList.add('hidden');
+            }
+        }
+
+        // NEW: Function to handle Assessment (A) Buttons
+        function setAssessmentStatus(status) {
+            const allowed = ['ดีขึ้น', 'แย่ลง', 'พอเดิม'];
+            const normalized = allowed.includes(status) ? status : '';
+            const input = document.getElementById('assessmentStatus');
+            if (!input) return;
+            input.value = (input.value === normalized) ? '' : normalized;
+            updateAssessmentButtons(input.value);
+        }
+
+        function updateAssessmentButtons(activeStatus) {
+            const items = [
+                { id: 'btnAssessBetter', value: 'ดีขึ้น' },
+                { id: 'btnAssessWorse', value: 'แย่ลง' },
+                { id: 'btnAssessSame', value: 'พอเดิม' },
+            ];
+            const activeClass = 'assess-btn-active';
+            const inactiveClass = 'assess-btn-inactive';
+
+            items.forEach(({ id, value }) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                btn.classList.remove(activeClass, inactiveClass);
+                if (value === activeStatus) {
+                    btn.classList.add(activeClass);
+                    btn.setAttribute('aria-pressed', 'true');
+                } else {
+                    btn.classList.add(inactiveClass);
+                    btn.setAttribute('aria-pressed', 'false');
+                }
+            });
+        }
+
+        // --- BP MULTI MEASURE (Compact via Modal) ---
+        function parseBpReadings(text) {
+            if (!text) return [];
+            return text
+                .split(/[\n,;|]+/g)
+                .map(s => s.trim())
+                .filter(Boolean);
+        }
+
+        function updateBpCountBadge() {
+            const badge = document.getElementById('bpCountBadge');
+            const bpInput = document.getElementById('valBP');
+            if (!badge || !bpInput) return;
+
+            const values = parseBpReadings(bpInput.value);
+            if (values.length > 1) {
+                badge.textContent = String(values.length);
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function openBpModal() {
+            const modal = document.getElementById('bpModal');
+            const container = document.getElementById('bpListContainer');
+            const bpInput = document.getElementById('valBP');
+            if (!modal || !container || !bpInput) return;
+
+            container.innerHTML = '';
+            const values = parseBpReadings(bpInput.value);
+            const seed = values.length ? values : [''];
+            seed.forEach(v => addBpRow(v, false));
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                const first = container.querySelector('input');
+                if (first) {
+                    first.focus();
+                    if (typeof first.select === 'function') first.select();
+                }
+            }, 50);
+        }
+
+        function closeBpModal() {
+            const modal = document.getElementById('bpModal');
+            if (!modal) return;
+            modal.classList.add('hidden');
+        }
+
+        function addBpRow(value = '', focus = true) {
+            const container = document.getElementById('bpListContainer');
+            if (!container) return;
+
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 items-center';
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = '189/104';
+            input.value = value;
+            input.className = 'flex-1 border border-gray-300 rounded-lg px-3 py-2 h-11 text-base text-center bg-white';
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addBpRow('', true);
+                }
+            });
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'w-11 h-11 rounded-lg bg-gray-100 border border-gray-300 text-gray-700 hover:bg-gray-200 font-bold';
+            removeBtn.setAttribute('aria-label', 'ลบค่า BP');
+            removeBtn.innerHTML = '<i class="fas fa-times"></i>';
+            removeBtn.addEventListener('click', () => {
+                row.remove();
+                if (container.children.length === 0) addBpRow('', true);
+            });
+
+            row.appendChild(input);
+            row.appendChild(removeBtn);
+            container.appendChild(row);
+
+            if (focus) input.focus();
+        }
+
+        function saveBpReadings() {
+            const container = document.getElementById('bpListContainer');
+            const bpInput = document.getElementById('valBP');
+            if (!container || !bpInput) return;
+
+            const inputs = Array.from(container.querySelectorAll('input'));
+            const values = inputs.map(i => (i.value || '').trim()).filter(Boolean);
+            bpInput.value = values.join(', ');
+            closeBpModal();
+            updateBpCountBadge();
+            showToast(values.length ? 'บันทึก BP แล้ว' : 'ล้างค่า BP แล้ว', values.length ? 'success' : 'info');
+        }
+
+        function toggleAdmitMode(forceState = null) {
+            const isAdmitInput = document.getElementById('isAdmitMode');
+            const currentVal = isAdmitInput.value === 'true';
+            const newState = (forceState !== null) ? forceState : !currentVal;
+
+            isAdmitInput.value = newState ? 'true' : 'false';
+
+            const btn = document.getElementById('btnToggleAdmit');
+            const admitSection = document.getElementById('admitSection');
+            const admitFields = document.getElementById('admitFields_container');
+            const standardAP = document.getElementById('standardAP_container');
+            const admitPlan = document.getElementById('admitPlan_container');
+            const admitPlanHint = document.getElementById('admitPlanHint');
+            const apTitle = document.getElementById('apSectionTitle');
+            const planLabel = document.getElementById('planLabel');
+
+            const updatePlanLabels = (isAdmitMode) => {
+                if (apTitle) {
+                    apTitle.textContent = isAdmitMode
+                        ? 'A (Assessment) / Admission Orders (แผนแรกรับ):'
+                        : 'A (Assessment) / P (Plan):';
+                }
+                if (planLabel) {
+                    planLabel.textContent = isAdmitMode
+                        ? 'Admission Orders (แผนการรักษาแรกรับ)'
+                        : 'P (Plan)';
+                }
+            };
+
+            if (newState) {
+                if (btn) {
+                    btn.classList.remove('bg-white', 'text-amber-800', 'border-amber-300');
+                    btn.classList.add('bg-amber-700', 'text-white', 'border-amber-700', 'shadow-md');
+                    btn.innerHTML = '<i class="fas fa-check-circle"></i> แสดงข้อมูลแรกรับ (เปิด)';
+                }
+                if (admitSection) admitSection.classList.remove('hidden');
+                updatePlanLabels(true);
+                if (admitFields) {
+                    admitFields.classList.remove('hidden');
+                    admitFields.classList.add('animate-pulse-once');
+                    setTimeout(() => admitFields.classList.remove('animate-pulse-once'), 500);
+                }
+                if (standardAP) standardAP.classList.add('hidden');
+                if (admitPlan) admitPlan.classList.remove('hidden');
+                if (admitPlanHint) admitPlanHint.classList.remove('hidden');
+            } else {
+                if (btn) {
+                    btn.classList.add('bg-white', 'text-amber-800', 'border-amber-300');
+                    btn.classList.remove('bg-amber-700', 'text-white', 'border-amber-700', 'shadow-md');
+                    btn.innerHTML = '<i class="fas fa-plus-circle"></i> เพิ่มข้อมูลแรกรับ (Admit Note)';
+                }
+                if (admitSection) admitSection.classList.add('hidden');
+                updatePlanLabels(false);
+                if (admitFields) admitFields.classList.add('hidden');
+                if (standardAP) standardAP.classList.remove('hidden');
+                if (admitPlan) admitPlan.classList.add('hidden');
+                if (admitPlanHint) admitPlanHint.classList.add('hidden');
+            }
+        }
+
+        function initDate() {
+            const today = new Date();
+            const day = today.getDate();
+            const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const monthShort = months[today.getMonth()];
+            const year = (today.getFullYear() + 543).toString().slice(-2);
+            document.getElementById('logDate').value = `${day} ${monthShort} ${year}`;
+            const timeEl = document.getElementById('logTime');
+            if (timeEl) timeEl.value = formatTimeHHMM(today);
+
+            toggleAdmitMode(false);
+        }
+
+        function formatTimeHHMM(date) {
+            const d = date instanceof Date ? date : new Date();
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            return `${hh}:${mm}`;
+        }
+
+        function openTimePicker(targetId) {
+            const el = document.getElementById(targetId);
+            if (!el) return;
+            el.focus();
+            if (typeof el.showPicker === 'function') {
+                try { el.showPicker(); } catch (_) { }
+            }
+        }
+
+        function loadData() {
+            const savedHeader = localStorage.getItem('patientLog_header') || defaultHeader;
+            const savedHistory = localStorage.getItem('patientLog_history') || defaultHistory;
+            document.getElementById('headerPart').value = savedHeader;
+            document.getElementById('historyPart').value = savedHistory;
+            checkHistoryVisibility();
+        }
+
+        function saveData() {
+            localStorage.setItem('patientLog_header', document.getElementById('headerPart').value);
+            localStorage.setItem('patientLog_history', document.getElementById('historyPart').value);
+        }
+
+        function restoreTemplate() {
+            if (confirm("ต้องการวางโครงร่างมาตรฐานทับข้อความปัจจุบันหรือไม่?")) {
+                document.getElementById('headerPart').value = blankTemplate;
+            }
+        }
+
+        function parseHeaderToForm() {
+            const raw = document.getElementById('headerPart').value.trim();
+            if (!raw) return;
+            if (raw.includes("(ส่วนที่ 2: บันทึกอาการรายวัน)")) { handleFullTextImport(raw); return; }
+            const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+            let nameVal = "", ageVal = "", dxVal = "", indicationVal = "", allergyVal = "", admitVal = "", medsText = "";
+            let ccVal = "", hpiVal = "", pmhVal = "", fhxVal = "";
+
+            const nameMatch = raw.match(/ผู้ป่วย:\s*(.*?)(?:\s*\((\d+)\s*ปี\))?$/m);
+            if (nameMatch) { nameVal = nameMatch[1]; ageVal = nameMatch[2] || ""; }
+            else if (lines.length > 0) {
+                let line0 = lines[0].replace("ผู้ป่วย:", "").trim();
+                const ageMatch = line0.match(/(.*?)(?:\s*\((\d+)\s*ปี\))?$/);
+                if (ageMatch) { nameVal = ageMatch[1]; ageVal = ageMatch[2] || ""; } else { nameVal = line0; }
+            }
+
+            const dxMatch = raw.match(/Dx:\s*(.*?)(?:\n|$)/);
+            if (dxMatch) {
+                dxVal = dxMatch[1].trim();
+            } else if (lines.length > 1) {
+                let potentialDx = lines[1];
+                if (!potentialDx.includes("วันที่รับ") && !potentialDx.includes("ยาที่ใช้")) dxVal = potentialDx.replace("Dx:", "").replace("แพ้ยา:", "").trim();
+            }
+
+            const indicationMatch = raw.match(/^(?:Indication|ข้อบ่งชี้)(?:\s*\(.*?\))?:\s*(.*?)(?:\n|วันที่รับ:|$)/mi);
+            if (indicationMatch) indicationVal = indicationMatch[1].trim();
+
+            const ccMatch = raw.match(/^CC:\s*(.*?)(?:\n|HPI:|$)/m);
+            if (ccMatch) ccVal = ccMatch[1].trim();
+            const hpiMatch = raw.match(/^HPI:\s*(.*?)(?:\n|PH:|$)/m);
+            if (hpiMatch) hpiVal = hpiMatch[1].trim();
+            const pmhMatch = raw.match(/^PH:\s*(.*?)(?:\n|FHx:|$)/m);
+            if (pmhMatch) pmhVal = pmhMatch[1].trim();
+            const fhxMatch = raw.match(/^FHx:\s*(.*?)(?:\n|Allergy:|$)/m);
+            if (fhxMatch) fhxVal = fhxMatch[1].trim();
+
+            const allergyMatch =
+                raw.match(/^Allergy:\s*(.*?)(?:\n|={5,}|$)/mi) ||
+                raw.match(/แพ้ยา:\s*(.*?)(?:\n|={5,}|$)/i);
+            if (allergyMatch) allergyVal = allergyMatch[1].trim();
+
+            const admitMatch = raw.match(/วันที่รับ:\s*(.*?)(?:\n|$)/);
+            if (admitMatch) admitVal = admitMatch[1].trim();
+            else { for (const line of lines) { if (line.match(/(\d{1,2}[\/\s][^\s]+[\/\s]\d{2,4})/) && !line.includes("ยาที่ใช้")) { admitVal = line.replace("วันที่รับ:", "").trim(); break; } } }
+
+            const medsHeaderRegex = /(?:💊|💉)?\s*ยาที่ใช้ปัจจุบัน/;
+            const medsStartMatch = raw.match(medsHeaderRegex);
+            if (medsStartMatch) {
+                medsText = raw.substring(medsStartMatch.index + medsStartMatch[0].length).trim();
+            } else {
+                let startMedsIndex = -1;
+                for (let i = 3; i < lines.length; i++) { if (lines[i].startsWith('•') || lines[i].startsWith('-')) { startMedsIndex = i; break; } }
+                if (startMedsIndex !== -1) medsText = lines.slice(startMedsIndex).join('\n');
+            }
+            if (medsText) {
+                medsText = medsText.split('\n').map(l => l.trim()).filter(l => l && !l.includes('อัปเดต') && !l.includes('Update') && l !== '(ยังไม่มีรายการยา)').map(l => l.replace(/^[•-]\s*/, '')).join('\n');
+            }
+
+            document.getElementById('pFName').value = nameVal === "..." ? "" : nameVal;
+            document.getElementById('pAge').value = ageVal;
+            document.getElementById('pDx').value = dxVal === "..." ? "" : dxVal;
+            document.getElementById('pIndication').value = indicationVal === "..." ? "" : indicationVal;
+            document.getElementById('pAllergy').value = allergyVal === "..." ? "" : allergyVal;
+            document.getElementById('pAdmitDate').value = admitVal === "..." ? "" : admitVal;
+            document.getElementById('pMedsCont').value = medsText === "..." ? "" : medsText;
+            const ccEl = document.getElementById('inputCC');
+            const hpiEl = document.getElementById('inputHPI');
+            const pmhEl = document.getElementById('inputPMH');
+            const fhxEl = document.getElementById('inputFHx');
+            if (ccEl) ccEl.value = ccVal === "..." ? "" : ccVal;
+            if (hpiEl) hpiEl.value = hpiVal === "..." ? "" : hpiVal;
+            if (pmhEl) pmhEl.value = pmhVal === "..." ? "" : pmhVal;
+            if (fhxEl) fhxEl.value = fhxVal === "..." ? "" : fhxVal;
+        }
+
+        function switchHeaderView(view) {
+            if (view === 'form') {
+                parseHeaderToForm();
+                document.getElementById('headerFormView').classList.remove('hidden');
+                document.getElementById('headerTextView').classList.add('hidden');
+                document.getElementById('medsContainer').classList.remove('hidden');
+                document.getElementById('tabForm').className = "tab-active pb-1";
+                document.getElementById('tabText').className = "tab-inactive pb-1";
+                const allergyError = document.getElementById('allergyError');
+                if (allergyError) allergyError.classList.add('hidden');
+                document.getElementById('pAllergy').classList.remove('ring-error');
+                updateHeaderFromForm();
+            } else {
+                document.getElementById('headerFormView').classList.add('hidden');
+                document.getElementById('headerTextView').classList.remove('hidden');
+                document.getElementById('medsContainer').classList.add('hidden');
+                document.getElementById('tabForm').className = "tab-inactive pb-1";
+                document.getElementById('tabText').className = "tab-active pb-1";
+            }
+        }
+
+        function updateHeaderFromForm() {
+            const name = document.getElementById('pFName').value.trim() || 'ชื่อ-นามสกุล';
+            const age = document.getElementById('pAge').value.trim();
+            const dx = document.getElementById('pDx').value.trim() || '...';
+            const indication = document.getElementById('pIndication').value.trim() || '...';
+            const admitDate = document.getElementById('pAdmitDate').value.trim() || '...';
+            const allergy = document.getElementById('pAllergy').value.trim();
+            const medsCont = document.getElementById('pMedsCont').value.trim();
+
+            const allergyError = document.getElementById('allergyError');
+            if (allergyError && allergy) allergyError.classList.add('hidden');
+            if (allergy) document.getElementById('pAllergy').classList.remove('ring-error');
+            const ageStr = age ? ` (${age} ปี)` : '';
+            const toSingleLine = (text) => (text || '').replace(/\s*\n\s*/g, ' ').trim();
+            const cc = toSingleLine(document.getElementById('inputCC')?.value);
+            const hpi = toSingleLine(document.getElementById('inputHPI')?.value);
+            const pmh = toSingleLine(document.getElementById('inputPMH')?.value);
+            const fhx = toSingleLine(document.getElementById('inputFHx')?.value);
+            const today = new Date();
+            const dateStr = `${today.getDate()}/${today.getMonth() + 1}/${(today.getFullYear() + 543).toString().slice(-2)}`;
+            let medsBlock = `💊 ยาที่ใช้ปัจจุบัน (อัปเดตล่าสุด: ${dateStr})`;
+            if (medsCont) {
+                const lines = medsCont.split('\n');
+                lines.forEach(line => { const cleanLine = line.trim(); if (cleanLine) medsBlock += `\n${cleanLine.startsWith('•') ? cleanLine : '• ' + cleanLine}`; });
+            } else { medsBlock += `\n• (ยังไม่มีรายการยา)`; }
+            const headerLines = [
+                `ผู้ป่วย: ${name}${ageStr}`,
+                `Dx: ${dx}`,
+                `Indication: ${indication}`,
+                `วันที่รับ: ${admitDate}`,
+                `CC: ${cc}`,
+                `HPI: ${hpi}`,
+                `PH: ${pmh}`,
+                `FHx: ${fhx}`,
+                `Allergy: ${allergy}`,
+                `==============`,
+                medsBlock,
+            ];
+            document.getElementById('headerPart').value = headerLines.join('\n');
+            saveData();
+        }
+
+        function checkHistoryVisibility() {
+            const history = document.getElementById('historyPart').value.trim();
+            const container = document.getElementById('historyContainer');
+            const showBtn = document.getElementById('showHistoryBtn');
+            if (history === "") { container.classList.add('hidden'); showBtn.classList.remove('hidden'); }
+            else { container.classList.add('hidden'); showBtn.classList.remove('hidden'); }
+        }
+
+        function toggleHistory() {
+            const container = document.getElementById('historyContainer');
+            if (container.classList.contains('hidden')) { container.classList.remove('hidden'); document.getElementById('showHistoryBtn').classList.add('hidden'); }
+            else { container.classList.add('hidden'); document.getElementById('showHistoryBtn').classList.remove('hidden'); }
+        }
+
+        function toggleHistoryLock() {
+            const textarea = document.getElementById('historyPart');
+            const btn = document.getElementById('btnHistoryLock');
+            const isLocked = textarea.hasAttribute('readonly');
+            if (isLocked) {
+                textarea.removeAttribute('readonly');
+                textarea.classList.remove('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
+                textarea.classList.add('bg-white', 'text-gray-900');
+                btn.innerHTML = '<i class="fas fa-lock-open text-green-600"></i> ปลดล็อกแล้ว';
+                btn.classList.remove('bg-gray-200', 'text-gray-700', 'border-gray-300');
+                btn.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+                textarea.focus();
+            } else {
+                textarea.setAttribute('readonly', 'true');
+                textarea.classList.remove('bg-white', 'text-gray-900');
+                textarea.classList.add('bg-gray-100', 'text-gray-600', 'cursor-not-allowed');
+                btn.innerHTML = '<i class="fas fa-lock text-xs"></i> ล็อก';
+                btn.classList.remove('bg-green-100', 'text-green-700', 'border-green-200');
+                btn.classList.add('bg-gray-200', 'text-gray-700', 'border-gray-300');
+            }
+        }
+
+        // --- HELPER: Copy Admit Meds to Header ---
+        function copyAdmitMedsToHeader() {
+            const admitMeds = document.getElementById('inputCont_Admit').value.trim();
+            if (!admitMeds) {
+                showToast("ไม่มีข้อมูลในช่อง Continuous Order ให้คัดลอก", "warning");
+                return;
+            }
+
+            const headerMedsInput = document.getElementById('pMedsCont');
+
+            // Clear old text and set new text immediately (No confirmation)
+            headerMedsInput.value = admitMeds;
+
+            // Trigger update to render text view
+            updateHeaderFromForm();
+
+            // Reset verification status since meds changed
+            document.getElementById('medsVerified').checked = false;
+            updateMedsStatus();
+
+            showToast("อัปเดตรายการยาปัจจุบันเรียบร้อย!");
+        }
+
+        // --- NEW CONFIRMATION SYSTEM (Replaces blocked window.confirm) ---
+        function openResetConfirmation() {
+            document.getElementById('newCaseModal').classList.remove('hidden');
+        }
+
+        function openClearFormConfirmation() {
+            document.getElementById('clearFormModal').classList.remove('hidden');
+        }
+
+        function closeConfirmation() {
+            document.getElementById('newCaseModal').classList.add('hidden');
+            document.getElementById('clearFormModal').classList.add('hidden');
+            document.getElementById('safetyCheckModal').classList.add('hidden');
+        }
+
+        function executeClearForm() {
+            resetFormFields();
+            initDate();
+            closeConfirmation();
+        }
+
+        function resetFormFields() {
+            // Removed 'inputAllergy_Admit' from the list
+            const ids = ['inputS', 'valBP', 'valT', 'valP', 'valR', 'valDTX', 'valDTX_Hr', 'valSpO2', 'valUrine', 'valStool', 'inputO_Extra', 'inputAP', 'inputOneDay_Admit', 'inputCont_Admit', 'inputPlanMx_Admit'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            updateBpCountBadge();
+            // Reset DTX Type selection (no default)
+            setDtxType('');
+            // Reset Assessment (A)
+            const assessInput = document.getElementById('assessmentStatus');
+            if (assessInput) assessInput.value = '';
+            const risk = document.getElementById('assessmentRisk');
+            if (risk) risk.checked = false;
+            updateAssessmentButtons('');
+        }
+
+        // --- CORE NEW CASE LOGIC (No Alert/Confirm - Uses Modal) ---
+        function executeNewCase() {
+            closeConfirmation();
+
+            try {
+                console.log('Execute New Case Triggered');
+
+                // 1. Reset Storage
+                document.getElementById('headerPart').value = "";
+                document.getElementById('historyPart').value = "";
+                checkHistoryVisibility();
+
+                // 2. Clear Header Inputs Manually
+                document.getElementById('pFName').value = "";
+                document.getElementById('pAge').value = "";
+                document.getElementById('pDx').value = "";
+                document.getElementById('pIndication').value = "";
+                document.getElementById('pAllergy').value = "";
+                // Clear baseline Admission History fields
+                const ccEl = document.getElementById('inputCC');
+                const hpiEl = document.getElementById('inputHPI');
+                const pmhEl = document.getElementById('inputPMH');
+                const fhxEl = document.getElementById('inputFHx');
+                if (ccEl) ccEl.value = "";
+                if (hpiEl) hpiEl.value = "";
+                if (pmhEl) pmhEl.value = "";
+                if (fhxEl) fhxEl.value = "";
+                const allergyError = document.getElementById('allergyError');
+                if (allergyError) allergyError.classList.add('hidden');
+                document.getElementById('pAllergy').classList.remove('ring-error');
+                document.getElementById('pMedsCont').value = "";
+
+                // 3. Set Dates (Manual Logic - Independent of initDate)
+                const today = new Date();
+                const day = today.getDate();
+                const months = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+                const monthShort = months[today.getMonth()];
+                const year = (today.getFullYear() + 543).toString().slice(-2);
+
+                document.getElementById('pAdmitDate').value = `${day} ${monthShort} ${year}`;
+                document.getElementById('logDate').value = `${day} ${monthShort} ${year}`;
+                const timeEl = document.getElementById('logTime');
+                if (timeEl) timeEl.value = formatTimeHHMM(today);
+
+                // 4. Clear Body Inputs
+                resetFormFields();
+                document.getElementById('outputArea').value = "";
+                document.getElementById('resultSection').classList.add('hidden');
+
+                // 5. Force View & Meds Status
+                document.getElementById('headerFormView').classList.remove('hidden');
+                document.getElementById('headerTextView').classList.add('hidden');
+                document.getElementById('medsContainer').classList.remove('hidden');
+                document.getElementById('tabForm').className = "tab-active pb-1";
+                document.getElementById('tabText').className = "tab-inactive pb-1";
+                document.getElementById('medsVerified').checked = false;
+                updateMedsStatus();
+
+                // 6. Force Update Header
+                updateHeaderFromForm();
+
+                // 7. FORCE ADMIT MODE ON
+                toggleAdmitMode(true);
+
+                // 8. Focus Logic
+                window.scrollTo(0, 0);
+                setTimeout(() => {
+                    const nameInput = document.getElementById('pFName');
+                    if (nameInput) {
+                        nameInput.focus();
+                        nameInput.click();
+                    }
+                }, 150);
+
+                showToast("เริ่มเคสใหม่เรียบร้อย!");
+            } catch (err) {
+                console.error("Error in executeNewCase: ", err);
+                showToast("เกิดข้อผิดพลาดในการเริ่มเคสใหม่", "error");
+            }
+        }
+
+        // --- NEW START BUTTON HANDLER ---
+        function startNewCase() {
+            // No native confirm() here. Open modal instead.
+            openResetConfirmation();
+        }
+
+        function triggerClearToday() {
+            openClearFormConfirmation();
+        }
+
+        function startExistingCase() {
+            switchHeaderView('form');
+            toggleAdmitMode(false);
+            const el = document.getElementById('dailyEntrySection');
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            showToast('พร้อมทำรายงานเคสเดิมแล้ว', 'info');
+        }
+
+        function generateLog() {
+            // VALIDATION: Time must be selected
+            const timeEl = document.getElementById('logTime');
+            const timeGroup = document.getElementById('timePickerGroup');
+            const timeVal = (timeEl?.value || '').trim();
+            if (!timeVal) {
+                if (timeGroup) timeGroup.classList.add('ring-error');
+                if (timeEl) timeEl.classList.add('ring-error');
+                setTimeout(() => {
+                    if (timeGroup) timeGroup.classList.remove('ring-error');
+                    if (timeEl) timeEl.classList.remove('ring-error');
+                }, 1000);
+                showToast("กรุณาเลือกเวลา ก่อนสร้างข้อความ", "error");
+                if (timeGroup) timeGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return;
+            }
+
+            // VALIDATION: Allergy must be filled
+            const allergy = document.getElementById('pAllergy').value.trim();
+            if (!allergy) {
+                // Switch to form view ensuring input is visible
+                switchHeaderView('form');
+                const allergyInput = document.getElementById('pAllergy');
+                const allergyError = document.getElementById('allergyError');
+                if (allergyError) allergyError.classList.remove('hidden');
+
+                // VISUAL FEEDBACK FOR ALLERGY
+                setTimeout(() => {
+                    allergyInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    allergyInput.classList.add('ring-error');
+                    allergyInput.focus();
+                    setTimeout(() => allergyInput.classList.remove('ring-error'), 1000);
+                }, 100); // Small delay to allow view switch
+
+                showToast("กรุณาระบุประวัติการแพ้ยา (หากไม่มีให้พิมพ์ “ปฏิเสธ” หรือ “-”)", "error");
+                return;
+            }
+
+            // VALIDATION: DTX type must be selected if DTX value is filled
+            const dtxVal = document.getElementById('valDTX')?.value?.trim() || '';
+            const dtxType = document.getElementById('dtxType')?.value?.trim() || '';
+            if (dtxVal && !dtxType) {
+                const dtxGroup = document.getElementById('dtxTypeButtonGroup');
+                const dtxError = document.getElementById('dtxTypeError');
+                if (dtxError) dtxError.classList.remove('hidden');
+
+                if (dtxGroup) {
+                    dtxGroup.classList.add('ring-error');
+                    setTimeout(() => dtxGroup.classList.remove('ring-error'), 1000);
+                    dtxGroup.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+
+                showToast("กรุณาเลือกประเภท DTX: ก่อน/หลัง/สุ่ม", "error");
+                return;
+            }
+
+            if (!document.getElementById('medsVerified').checked) {
+                // Open Safety Modal instead of native confirm
+                document.getElementById('safetyCheckModal').classList.remove('hidden');
+                // Scroll to meds to visually indicate
+                switchHeaderView('form');
+                document.getElementById('medsContainer').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const container = document.getElementById('medsContainer');
+                container.classList.add('ring-4', 'ring-red-400');
+                setTimeout(() => container.classList.remove('ring-4', 'ring-red-400'), 1000);
+                return;
+            }
+            executeGenerateLog();
+        }
+
+        function handleBulletKeydown(e) {
+            if (e.key === 'Enter') {
+                const textarea = e.target;
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                const value = textarea.value;
+                const before = value.substring(0, start);
+                const after = value.substring(end);
+
+                // Find current line
+                const lastLineIndex = before.lastIndexOf('\n');
+                const currentLine = before.substring(lastLineIndex + 1);
+
+                // Check if current line starts with bullet
+                if (/^[\u2022\u25cf\u25cb\-\*]\s/.test(currentLine)) {
+                    e.preventDefault();
+                    // If line is ONLY bullet, remove it (end of list)
+                    if (/^[\u2022\u25cf\u25cb\-\*]\s*$/.test(currentLine)) {
+                        textarea.value = value.substring(0, lastLineIndex + 1) + after;
+                        textarea.selectionStart = textarea.selectionEnd = lastLineIndex + 1;
+                    } else {
+                        // Insert new bullet
+                        const bullet = currentLine.match(/^[\u2022\u25cf\u25cb\-\*]\s/)[0];
+                        const newValue = before + '\n' + bullet + after;
+                        textarea.value = newValue;
+                        textarea.selectionStart = textarea.selectionEnd = start + 1 + bullet.length;
+                    }
+                }
+            }
+        }
+
+        function confirmSafetyCheck() {
+            document.getElementById('medsVerified').checked = true;
+            updateMedsStatus();
+            document.getElementById('safetyCheckModal').classList.add('hidden');
+            executeGenerateLog();
+        }
+
+        function cancelSafetyCheck() {
+            document.getElementById('safetyCheckModal').classList.add('hidden');
+        }
+
+        function executeGenerateLog() {
+            saveData();
+            const header = document.getElementById('headerPart').value.trim();
+            const history = document.getElementById('historyPart').value.trim();
+            const date = document.getElementById('logDate').value;
+            const logTimeEl = document.getElementById('logTime');
+            let time = logTimeEl?.value?.trim() || '';
+            if (logTimeEl && !time) {
+                time = formatTimeHHMM(new Date());
+                logTimeEl.value = time;
+            }
+            const isAdmit = document.getElementById('isAdmitMode').value === 'true';
+
+            // Define Indentation (4 spaces as requested)
+            const INDENT = "    ";
+
+            // Helper to indent text lines
+            const indentText = (text) => {
+                if (!text) return "";
+                return text.split('\n').map(line => INDENT + line).join('\n');
+            };
+
+            // Helper to add • bullets (Only if starts with -)
+            const addBullets = (text) => {
+                if (!text) return "";
+                return text
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(Boolean)
+                    .map(line => {
+                        if (line.startsWith('-')) return '• ' + line.replace(/^-+\s*/, '');
+                        return line; // Do not force bullet if user didn't type it
+                    })
+                    .join('\n');
+            };
+
+            // Helper: Format Plan text as "P: • ..." with aligned bullets (4 spaces)
+            const P_ALIGN = "    ";
+            const formatPBlock = (text) => {
+                const bulletText = addBullets(text);
+                if (!bulletText) return "";
+                const lines = bulletText.split('\n');
+                return lines
+                    .map((line, idx) => (idx === 0 ? `P: ${line}` : `${P_ALIGN}${line}`))
+                    .join('\n');
+            };
+
+            const assessStatus = document.getElementById('assessmentStatus')?.value?.trim() || '';
+            const assessRisk = document.getElementById('assessmentRisk')?.checked;
+            const aParts = [];
+            if (assessStatus) aParts.push(assessStatus);
+            if (assessRisk) aParts.push('เสี่ยงภาวะแทรกซ้อน');
+            const aLine = aParts.length ? `A: ${aParts.join(', ')}` : "";
+
+            let pFinal = "";
+            if (isAdmit) {
+                const ORDER_INDENT = "   ";
+                const oneDay = document.getElementById('inputOneDay_Admit').value.trim();
+                const cont = document.getElementById('inputCont_Admit').value.trim();
+                const planMx = document.getElementById('inputPlanMx_Admit').value.trim();
+
+                const indentWith = (text, indent) => {
+                    if (!text) return "";
+                    return text.split('\n').map(line => indent + line).join('\n');
+                };
+
+                const blocks = [];
+                if (oneDay) blocks.push(`One Day Order:\n${indentWith(addBullets(oneDay), ORDER_INDENT)}`);
+                if (cont) blocks.push(`Continuous Order:\n${indentWith(addBullets(cont), ORDER_INDENT)}`);
+                if (planMx) blocks.push(formatPBlock(planMx));
+
+                pFinal = blocks.join('\n');
+            } else {
+                const rawP = document.getElementById('inputAP').value.trim();
+                if (rawP) pFinal = formatPBlock(rawP);
+            }
+
+            let sBlock = "";
+            const s = document.getElementById('inputS').value.trim();
+            if (s) sBlock += `S: ${s}\n`;
+
+            const bp = document.getElementById('valBP').value.trim();
+            const t = document.getElementById('valT').value.trim();
+            const p = document.getElementById('valP').value.trim();
+            const r = document.getElementById('valR').value.trim();
+
+            // Updated DTX Generation Logic (Simplified format)
+            const dtxVal = document.getElementById('valDTX').value.trim();
+            let dtxStr = "";
+            if (dtxVal) {
+                const type = document.getElementById('dtxType').value.trim();
+                const hrs = document.getElementById('valDTX_Hr').value.trim();
+
+                let contextStr = "";
+                if (type === 'AC') {
+                    // Result: (ก่อนอาหาร 3 ชม.) or (ก่อนอาหาร)
+                    contextStr = hrs ? `ก่อนอาหาร ${hrs} ชม.` : `ก่อนอาหาร`;
+                } else if (type === 'PC') {
+                    // Result: (หลังอาหาร 3 ชม.) or (หลังอาหาร)
+                    contextStr = hrs ? `หลังอาหาร ${hrs} ชม.` : `หลังอาหาร`;
+                } else if (type === 'R') {
+                    contextStr = `Random`;
+                }
+
+                dtxStr = contextStr ? `${dtxVal} mg% (${contextStr})` : `${dtxVal} mg%`;
+            }
+
+            const spo2 = document.getElementById('valSpO2').value.trim();
+            const urine = document.getElementById('valUrine').value.trim();
+            const stool = document.getElementById('valStool').value.trim();
+            const oExtra = document.getElementById('inputO_Extra').value.trim();
+
+            let oLines = [];
+            let vsParts = [];
+            if (t) vsParts.push(`BT=${t}`);
+            if (p) vsParts.push(`PR=${p}`);
+            if (r) vsParts.push(`RR=${r}`);
+            if (bp) vsParts.push(`BP=${bp}`);
+            const vsInline = vsParts.length ? `${vsParts.join(', ')}` : "";
+            if (dtxStr) oLines.push(`• DTX: ${dtxStr}`);
+            if (spo2) oLines.push(`• SpO2: ${spo2}%`);
+
+            // Updated Excretion Logic: Combined line + Added 'ครั้ง' + Renamed label
+            let excParts = [];
+            if (urine) excParts.push(`ปัสสาวะ ${urine} ครั้ง`);
+            if (stool) excParts.push(`ถ่าย ${stool} ครั้ง`);
+
+            if (excParts.length > 0) {
+                oLines.push(`• Excretion: ${excParts.join(', ')}`);
+            }
+
+            if (oExtra) oLines.push(oExtra);
+
+            // Apply Indent to all O lines (except V/S which is shown inline with O:)
+            const oFinal = oLines.map(line => INDENT + line).join('\n');
+
+            let logHeaderLine = `🔻 ${date}${time ? ' ' + time : ''}`;
+            if (isAdmit) logHeaderLine += " (แรกรับ)";
+
+            let newEntry = `${logHeaderLine}\n${sBlock}`;
+            if (vsInline || oFinal) {
+                newEntry += vsInline ? `O: ${vsInline}\n` : `O:\n`;
+                if (oFinal) newEntry += `${oFinal}\n`;
+            }
+            const apParts = [];
+            if (aLine) apParts.push(aLine);
+            if (pFinal) apParts.push(pFinal);
+            const apText = apParts.join('\n');
+            if (apText) newEntry += apText;
+
+            const separator = "==============\n(ส่วนที่ 2: บันทึกอาการรายวัน)";
+
+            // Updated Logic: 
+            // 1. Shortened the separator line.
+            // 2. Smart Check: Add separator if it's the FIRST entry of that DATE.
+            // 3. Same day entries get standard double-spacing (\n\n) for readability.
+            let spacer = "\n\n"; // Default spacing (1 blank line)
+
+            // Check if current date string is already in history
+            const isFirstEntryOfDay = !history.includes(date);
+
+            if (history !== "" && isFirstEntryOfDay) {
+                spacer = "\n\n-----------------\n";
+            }
+
+            let fullLog = history === "" ? `${header}\n${separator}\n${newEntry}` : `${header}\n${separator}\n${history}${spacer}${newEntry}`;
+
+            document.getElementById('outputArea').value = fullLog;
+            document.getElementById('resultSection').classList.remove('hidden');
+            setTimeout(() => document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+        }
+
+        function copyToClipboard() {
+            const copyText = document.getElementById("outputArea");
+            copyText.select();
+            try { document.execCommand('copy'); showToast("คัดลอกเรียบร้อย!"); }
+            catch (err) { navigator.clipboard.writeText(copyText.value).then(() => showToast("คัดลอกเรียบร้อย!")); }
+        }
+
+        function shareToLine() {
+            const text = document.getElementById('outputArea')?.value?.trim();
+            if (!text) {
+                showToast("ยังไม่มีข้อความให้แชร์", "warning");
+                return;
+            }
+            const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(text)}`;
+            window.open(lineUrl, '_blank');
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastMsg').innerText = message;
+
+            if (icon) {
+                let iconName = "check-circle";
+                let color = "#86efac"; // green-300
+                if (type === "error") {
+                    iconName = "exclamation-circle";
+                    color = "#fecaca"; // red-200
+                } else if (type === "warning") {
+                    iconName = "exclamation-triangle";
+                    color = "#fde68a"; // yellow-200
+                } else if (type === "info") {
+                    iconName = "info-circle";
+                    color = "#bfdbfe"; // blue-200
+                }
+                icon.className = `fas fa-${iconName} mr-2`;
+                icon.style.color = color;
+            }
+
+            toast.classList.remove('hidden');
+            if (toast._timer) clearTimeout(toast._timer);
+            toast._timer = setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        window.onload = function () {
+            initFontSize();
+            loadData();
+            initDate();
+            initNumericInputs();
+            updateBpCountBadge();
+            setDtxType('');
+            updateMedsStatus();
+            document.getElementById('headerPart').addEventListener('input', saveData);
+            document.getElementById('historyPart').addEventListener('input', saveData);
+        };
+    </script>
+</body>
+
+</html>
