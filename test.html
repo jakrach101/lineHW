@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unit Tests - Patient Log App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #06c755;
+            padding-bottom: 10px;
+        }
+        .test-suite {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-suite h2 {
+            color: #06c755;
+            margin-top: 0;
+        }
+        .test-case {
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ddd;
+            background: #fafafa;
+        }
+        .test-case.pass {
+            border-left-color: #16a34a;
+            background: #f0fdf4;
+        }
+        .test-case.fail {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+        .test-case h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+        }
+        .test-case .status {
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .test-case.pass .status {
+            color: #16a34a;
+        }
+        .test-case.fail .status {
+            color: #dc2626;
+        }
+        .test-case .error {
+            color: #dc2626;
+            font-family: monospace;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+        .summary {
+            background: #333;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .summary .passed {
+            color: #16a34a;
+            font-weight: bold;
+        }
+        .summary .failed {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        button {
+            background: #06c755;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #05a546;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Unit Tests - Patient Log App</h1>
+    <button onclick="runAllTests()">🚀 Run All Tests</button>
+    
+    <div id="test-results"></div>
+    <div id="summary" class="summary" style="display: none;"></div>
+
+    <script>
+        // Test Framework
+        let totalTests = 0;
+        let passedTests = 0;
+        let failedTests = 0;
+
+        function assert(condition, message) {
+            if (!condition) {
+                throw new Error(message || 'Assertion failed');
+            }
+        }
+
+        function assertEquals(actual, expected, message) {
+            if (actual !== expected) {
+                throw new Error(message || `Expected ${expected}, got ${actual}`);
+            }
+        }
+
+        function assertArrayEquals(actual, expected, message) {
+            if (JSON.stringify(actual) !== JSON.stringify(expected)) {
+                throw new Error(message || `Expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`);
+            }
+        }
+
+        function test(name, fn) {
+            totalTests++;
+            const testCase = document.createElement('div');
+            testCase.className = 'test-case';
+            testCase.innerHTML = `<h3>📋 ${name}</h3>`;
+            
+            try {
+                fn();
+                testCase.classList.add('pass');
+                testCase.innerHTML += `<span class="status">✅ PASS</span>`;
+                passedTests++;
+            } catch (error) {
+                testCase.classList.add('fail');
+                testCase.innerHTML += `<span class="status">❌ FAIL</span>`;
+                testCase.innerHTML += `<div class="error">${error.message}</div>`;
+                failedTests++;
+            }
+            
+            document.getElementById('test-results').appendChild(testCase);
+        }
+
+        function testSuite(name, fn) {
+            const suite = document.createElement('div');
+            suite.className = 'test-suite';
+            suite.innerHTML = `<h2>📦 ${name}</h2>`;
+            document.getElementById('test-results').appendChild(suite);
+            fn();
+        }
+
+        function showSummary() {
+            const summary = document.getElementById('summary');
+            summary.style.display = 'block';
+            summary.innerHTML = `
+                <h3>📊 Test Summary</h3>
+                <p>Total: ${totalTests} | <span class="passed">Passed: ${passedTests}</span> | <span class="failed">Failed: ${failedTests}</span>
+                <p>Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%</p>
+            `;
+        }
+
+        function runAllTests() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            totalTests = 0;
+            passedTests = 0;
+            failedTests = 0;
+
+            // Run all test suites
+            testMedsFunctions();
+            testValidationFunctions();
+            testUtilityFunctions();
+
+            showSummary();
+        }
+
+        // ============================================
+        // TEST SUITES
+        // ============================================
+
+        function testMedsFunctions() {
+            testSuite('💊 Medications Functions', () => {
+                // parseCurrentMedsLines tests
+                test('parseCurrentMedsLines - Basic parsing', () => {
+                    const input = '• Drug A 500mg\n• Drug B 10mg';
+                    const result = parseCurrentMedsLines(input);
+                    assertArrayEquals(result, ['Drug A 500mg', 'Drug B 10mg']);
+                });
+
+                test('parseCurrentMedsLines - Empty input', () => {
+                    const result = parseCurrentMedsLines('');
+                    assertArrayEquals(result, []);
+                });
+
+                test('parseCurrentMedsLines - With dashes', () => {
+                    const input = '- Drug A\n- Drug B';
+                    const result = parseCurrentMedsLines(input);
+                    assertArrayEquals(result, ['Drug A', 'Drug B']);
+                });
+
+                test('parseCurrentMedsLines - Mixed bullets', () => {
+                    const input = '• Drug A\n- Drug B\n• Drug C';
+                    const result = parseCurrentMedsLines(input);
+                    assertArrayEquals(result, ['Drug A', 'Drug B', 'Drug C']);
+                });
+
+                test('parseCurrentMedsLines - With empty lines', () => {
+                    const input = '• Drug A\n\n• Drug B';
+                    const result = parseCurrentMedsLines(input);
+                    assertArrayEquals(result, ['Drug A', 'Drug B']);
+                });
+
+                // buildMedsEditsFromBaseline tests
+                test('buildMedsEditsFromBaseline - No changes', () => {
+                    const baseline = '• Drug A\n• Drug B';
+                    const current = '• Drug A\n• Drug B';
+                    const result = buildMedsEditsFromBaseline(baseline, current);
+                    assertArrayEquals(result, []);
+                });
+
+                test('buildMedsEditsFromBaseline - One change', () => {
+                    const baseline = '• Drug A\n• Drug B';
+                    const current = '• Drug A\n• Drug B Modified';
+                    const result = buildMedsEditsFromBaseline(baseline, current);
+                    assertEquals(result.length, 1);
+                    assertEquals(result[0].index, 1);
+                    assertEquals(result[0].original, 'Drug B');
+                    assertEquals(result[0].updated, 'Drug B Modified');
+                });
+
+                test('buildMedsEditsFromBaseline - Added drug', () => {
+                    const baseline = '• Drug A';
+                    const current = '• Drug A\n• Drug B';
+                    const result = buildMedsEditsFromBaseline(baseline, current);
+                    assertEquals(result.length, 1);
+                    assertEquals(result[0].index, 1);
+                    assertEquals(result[0].original, '');
+                    assertEquals(result[0].updated, 'Drug B');
+                });
+
+                test('buildMedsEditsFromBaseline - Removed drug', () => {
+                    const baseline = '• Drug A\n• Drug B';
+                    const current = '• Drug A';
+                    const result = buildMedsEditsFromBaseline(baseline, current);
+                    assertEquals(result.length, 0);
+                    // Note: Removed drugs are not tracked as edits since current is empty
+                });
+
+                // parseMedsChangedData tests
+                test('parseMedsChangedData - Valid JSON', () => {
+                    const input = JSON.stringify([
+                        { index: 0, original: 'Drug A', updated: 'Drug A Modified' }
+                    ]);
+                    const result = parseMedsChangedData(input);
+                    assertEquals(result.length, 1);
+                    assertEquals(result[0].index, 0);
+                    assertEquals(result[0].original, 'Drug A');
+                    assertEquals(result[0].updated, 'Drug A Modified');
+                });
+
+                test('parseMedsChangedData - Invalid JSON falls back to text parsing', () => {
+                    const input = 'Drug A Modified\nDrug B Modified';
+                    const result = parseMedsChangedData(input);
+                    assertEquals(result.length, 2);
+                    assertEquals(result[0].index, 0);
+                    assertEquals(result[0].updated, 'Drug A Modified');
+                });
+
+                test('parseMedsChangedData - Invalid index filtered out', () => {
+                    const input = JSON.stringify([
+                        { index: null, original: 'Drug A', updated: 'Drug A Modified' },
+                        { index: 0, original: 'Drug B', updated: 'Drug B Modified' }
+                    ]);
+                    const result = parseMedsChangedData(input);
+                    assertEquals(result.length, 1);
+                    assertEquals(result[0].index, 0);
+                });
+
+                // normalizeMedsChangedLine tests
+                test('normalizeMedsChangedLine - Basic', () => {
+                    const result = normalizeMedsChangedLine('Drug A 500mg');
+                    assertEquals(result, 'Drug A 500mg');
+                });
+
+                test('normalizeMedsChangedLine - With bullet', () => {
+                    const result = normalizeMedsChangedLine('• Drug A 500mg');
+                    assertEquals(result, 'Drug A 500mg');
+                });
+
+                test('normalizeMedsChangedLine - With dash', () => {
+                    const result = normalizeMedsChangedLine('- Drug A 500mg');
+                    assertEquals(result, 'Drug A 500mg');
+                });
+
+                test('normalizeMedsChangedLine - With prefix', () => {
+                    const result = normalizeMedsChangedLine('ปรับยา: Drug A 500mg');
+                    assertEquals(result, 'Drug A 500mg');
+                });
+
+                test('normalizeMedsChangedLine - With spaces', () => {
+                    const result = normalizeMedsChangedLine('  •  Drug A 500mg  ');
+                    assertEquals(result, 'Drug A 500mg');
+                });
+            });
+        }
+
+        function testValidationFunctions() {
+            testSuite('✅ Validation Functions', () => {
+                // validateMedsContent tests
+                test('validateMedsContent - Valid medication', () => {
+                    const result = validateMedsContent('• Drug A 500mg\n• Drug B 10mg');
+                    assertEquals(result.isValid, true);
+                    assertEquals(result.warnings.length, 0);
+                });
+
+                test('validateMedsContent - Contains lab keyword', () => {
+                    const result = validateMedsContent('• Lab CBC');
+                    assertEquals(result.isValid, false);
+                    assert(result.warnings.includes('lab'));
+                });
+
+                test('validateMedsContent - Contains CT keyword', () => {
+                    const result = validateMedsContent('• CT Chest');
+                    assertEquals(result.isValid, false);
+                    assert(result.warnings.includes('ct'));
+                });
+
+                test('validateMedsContent - Contains NPO keyword', () => {
+                    const result = validateMedsContent('• NPO');
+                    assertEquals(result.isValid, false);
+                    assert(result.warnings.includes('npo'));
+                });
+
+                test('validateMedsContent - Empty content', () => {
+                    const result = validateMedsContent('');
+                    assertEquals(result.isValid, true);
+                });
+            });
+        }
+
+        function testUtilityFunctions() {
+            testSuite('🔧 Utility Functions', () => {
+                // sanitizeNumericInput tests
+                test('sanitizeNumericInput - Integer mode', () => {
+                    const input = { value: '123abc', dataset: { numeric: 'int' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '123');
+                });
+
+                test('sanitizeNumericInput - Decimal mode', () => {
+                    const input = { value: '12.5', dataset: { numeric: 'decimal1' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '12.5');
+                });
+
+                test('sanitizeNumericInput - Decimal with comma', () => {
+                    const input = { value: '12,5', dataset: { numeric: 'decimal1' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '12.5');
+                });
+
+                test('sanitizeNumericInput - Decimal multiple dots', () => {
+                    const input = { value: '12.5.3', dataset: { numeric: 'decimal1' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '12.5');
+                });
+
+                test('sanitizeNumericInput - Decimal starting with dot', () => {
+                    const input = { value: '.5', dataset: { numeric: 'decimal1' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '0.5');
+                });
+
+                test('sanitizeNumericInput - Temperature limit', () => {
+                    const input = { value: '123', id: 'valT', dataset: { numeric: 'decimal1' } };
+                    sanitizeNumericInput(input);
+                    assertEquals(input.value, '12');
+                });
+            });
+        }
+
+        // ============================================
+        // MOCK FUNCTIONS (Copy from main app)
+        // ============================================
+
+        function parseCurrentMedsLines(sourceText) {
+            const raw = typeof sourceText === 'string' ? sourceText : '';
+            return raw
+                .split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line)
+                .map((line) => line.replace(/^[•\-\*]\s*/, '').trim());
+        }
+
+        function buildMedsEditsFromBaseline(baselineText, currentText) {
+            const baselineLines = parseCurrentMedsLines(baselineText);
+            const currentLines = parseCurrentMedsLines(currentText);
+            const edits = [];
+            const maxLen = Math.max(baselineLines.length, currentLines.length);
+            for (let i = 0; i < maxLen; i++) {
+                const original = baselineLines[i] || '';
+                const current = currentLines[i] || '';
+                if (current && current !== original) {
+                    edits.push({ index: i, original, updated: current });
+                }
+            }
+            return edits;
+        }
+
+        function parseMedsChangedData(raw) {
+            const trimmed = (raw || '').trim();
+            if (!trimmed) return [];
+            try {
+                const data = JSON.parse(trimmed);
+                if (Array.isArray(data)) {
+                    return data
+                        .map((item) => ({
+                            index: (item.index === null || item.index === undefined) ? null : (Number.isFinite(Number(item.index)) ? Number(item.index) : null),
+                            original: item?.original ? String(item.original) : '',
+                            updated: item?.updated ? String(item.updated) : '',
+                        }))
+                        .filter((item) => item.updated && item.index !== null);
+                }
+            } catch (_) { }
+
+            return trimmed
+                .split('\n')
+                .map((line, index) => ({
+                    index,
+                    original: '',
+                    updated: normalizeMedsChangedLine(line),
+                }))
+                .filter((item) => item.updated);
+        }
+
+        function normalizeMedsChangedLine(line) {
+            const cleaned = (line || '').replace(/^[\s•\-\*]+/g, '').trim();
+            return cleaned.replace(/^ปรับยา:\s*/i, '').trim();
+        }
+
+        const NON_MED_KEYWORDS = [
+            'lab', 'cbc', 'bun', 'cr', 'creatinine', 'electrolyte', 'na', 'k', 'cl', 'hco3',
+            'x-ray', 'cxr', 'ct', 'mri', 'ultrasound', 'usg', 'echo', 'ecg', 'ekg',
+            'npo', 'fasting', 'iv fluid', 'ns', 'rl', 'd5w', 'd5ns', 'd10w',
+            'blood', 'type', 'crossmatch', 'prbc', 'ffp', 'platelet',
+            'consult', 'refer', 'admit', 'dc', 'discharge', 'transfer'
+        ];
+
+        function validateMedsContent(text) {
+            if (!text || !text.trim()) return { isValid: true, warnings: [] };
+            const lowerText = text.toLowerCase();
+            const warnings = [];
+            
+            NON_MED_KEYWORDS.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'i');
+                if (regex.test(lowerText)) {
+                    warnings.push(keyword);
+                }
+            });
+            
+            return {
+                isValid: warnings.length === 0,
+                warnings: warnings
+            };
+        }
+
+        function sanitizeNumericInput(input) {
+            const mode = input?.dataset?.numeric;
+            if (!mode) return;
+
+            const before = input.value;
+            let after = before;
+
+            if (mode === 'int') {
+                after = before.replace(/\D+/g, '');
+            } else if (mode === 'decimal1') {
+                after = before.replace(/,/g, '.').replace(/[^0-9.]/g, '');
+                if (after.startsWith('.')) after = '0' + after;
+                const dotIndex = after.indexOf('.');
+                if (dotIndex !== -1) {
+                    const intPart = after.slice(0, dotIndex);
+                    const fracPart = after.slice(dotIndex + 1).replace(/\./g, '');
+                    after = intPart + '.' + fracPart.slice(0, 1);
+                }
+                // Limit temperature to max 2 digits (e.g., 42°C)
+                if (input.id === 'valT') {
+                    const numValue = parseFloat(after);
+                    if (!isNaN(numValue) && numValue > 99) {
+                        after = after.slice(0, 2);
+                    }
+                }
+            }
+
+            if (after !== before) input.value = after;
+        }
+
+        // Auto-run tests on page load
+        window.onload = function() {
+            runAllTests();
+        };
+    </script>
+</body>
+</html>
