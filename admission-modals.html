@@ -6,7 +6,7 @@
             <h2 class="text-xl font-bold text-gray-800">
                 <i class="fas fa-eye text-blue-600 mr-2"></i>ข้อมูลประวัติแรกรับ (Admission Note)
             </h2>
-            <button onclick="closeAdmissionNoteViewModal()" class="text-gray-400 hover:text-gray-600" aria-label="ปิด">
+            <button type="button" data-action="closeAdmissionNoteViewModal" class="text-gray-400 hover:text-gray-600" aria-label="ปิด">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
@@ -35,7 +35,7 @@
         </div>
         
         <div class="flex justify-end space-x-3 mt-6">
-            <button onclick="closeAdmissionNoteViewModal()"
+            <button type="button" data-action="closeAdmissionNoteViewModal"
                 class="px-5 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-bold">
                 ปิด
             </button>
@@ -51,7 +51,7 @@
             <h2 class="text-xl font-bold text-gray-800">
                 <i class="fas fa-clipboard-list text-amber-600 mr-2"></i>แผนการรักษาแรกรับ (Admission Orders)
             </h2>
-            <button onclick="closeAdmissionOrdersViewModal()" class="text-gray-400 hover:text-gray-600" aria-label="ปิด">
+            <button type="button" data-action="closeAdmissionOrdersViewModal" class="text-gray-400 hover:text-gray-600" aria-label="ปิด">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
@@ -80,7 +80,7 @@
         </div>
         
         <div class="flex justify-end space-x-3 mt-6">
-            <button onclick="closeAdmissionOrdersViewModal()"
+            <button type="button" data-action="closeAdmissionOrdersViewModal"
                 class="px-5 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-bold">
                 ปิด
             </button>
