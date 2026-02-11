@@ -4164,7 +4164,67 @@ function refreshMedOrderList() {
         listEl.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">ยังไม่มียา</p>';
         return;
     }
-    listEl.innerHTML = lines.map(l => `<div class="text-sm font-mono text-gray-800 py-0.5">${escapeHtml(l)}</div>`).join('');
+    listEl.innerHTML = lines.map((l, i) => `<div class="flex items-center justify-between gap-2 py-0.5">
+        <span class="text-sm font-mono text-gray-800 flex-1 min-w-0 truncate">${escapeHtml(l)}</span>
+        <button type="button" data-remove-med="${i}" data-remove-target="${escapeHtml(target)}"
+            class="shrink-0 w-6 h-6 flex items-center justify-center rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors text-xs"
+            title="ลบยานี้">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>`).join('');
+
+    listEl.querySelectorAll('[data-remove-med]').forEach(btn => {
+        btn.addEventListener('click', () => handleRemoveMedClick(btn));
+    });
+}
+
+function handleRemoveMedClick(btn) {
+    if (btn.dataset.confirmRemove === 'true') {
+        const index = Number(btn.dataset.removeMed);
+        const target = btn.dataset.removeTarget;
+        removeMedOrderLine(index, target);
+        return;
+    }
+    btn.dataset.confirmRemove = 'true';
+    btn.classList.remove('text-gray-400', 'hover:text-red-600', 'hover:bg-red-50');
+    btn.classList.add('text-white', 'bg-red-500', 'hover:bg-red-600');
+    btn.innerHTML = '<span class="text-[10px] font-bold whitespace-nowrap">ลบ?</span>';
+    btn.style.width = 'auto';
+    btn.style.padding = '0 6px';
+    setTimeout(() => {
+        if (btn.isConnected && btn.dataset.confirmRemove === 'true') {
+            btn.dataset.confirmRemove = '';
+            btn.classList.add('text-gray-400', 'hover:text-red-600', 'hover:bg-red-50');
+            btn.classList.remove('text-white', 'bg-red-500', 'hover:bg-red-600');
+            btn.innerHTML = '<i class="fas fa-times"></i>';
+            btn.style.width = '1.5rem';
+            btn.style.padding = '';
+        }
+    }, 3000);
+}
+
+function removeMedOrderLine(index, target) {
+    if (target === 'pMedsCont') {
+        const lines = getMedsLines();
+        if (index >= 0 && index < lines.length) {
+            const removed = lines.splice(index, 1)[0];
+            setMedsLines(lines);
+            showToast(`ลบยาแล้ว: ${stripMedsListPrefix(removed)}`, 'info');
+        }
+    } else {
+        const textarea = document.getElementById(target);
+        if (textarea) {
+            const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+            if (index >= 0 && index < lines.length) {
+                const removed = lines.splice(index, 1)[0];
+                textarea.value = lines.join('\n');
+                resizeTextareaToContent(textarea);
+                syncOrdersStoreFromUI({ source: 'builder' });
+                showToast(`ลบยาแล้ว: ${stripMedsListPrefix(removed)}`, 'info');
+            }
+        }
+    }
+    refreshMedOrderList();
 }
 
 // --- Tab 2: ปรับยา (operates directly on pMedsCont) ---
