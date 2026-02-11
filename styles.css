@@ -443,53 +443,6 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     border: 1px solid rgba(255, 255, 255, 0.45);
 }
 
-.meds-edit-row {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.55rem 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    background-color: #f8fafc;
-    cursor: pointer;
-    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-.meds-edit-row:hover {
-    background-color: #f1f5f9;
-}
-
-.meds-edit-input {
-    flex: 1;
-    border: 0;
-    background: transparent;
-    font-size: 1rem;
-    color: #0f172a;
-}
-
-.meds-edit-row.meds-edit-active {
-    background-color: #fff7ed;
-    border-color: #fdba74;
-    box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.3);
-}
-
-.meds-edit-row.meds-edit-changed {
-    background-color: #fef2f2;
-    border-color: #fecaca;
-}
-
-.meds-edit-row.meds-edit-changed .meds-edit-input {
-    color: #b91c1c;
-    font-weight: 700;
-}
-
-.meds-edit-status {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #b91c1c;
-    white-space: nowrap;
-}
-
 .meds-editor {
     min-height: 9rem;
     white-space: pre-wrap;
@@ -720,4 +673,46 @@ button:focus-visible {
 .report-sparkline {
     width: 100%;
     height: 36px;
+}
+
+/* ── Med Preset Dropdown ── */
+.med-preset-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    z-index: 50;
+    max-height: 260px;
+    overflow-y: auto;
+    background: #fff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,.12);
+    margin-top: 2px;
+}
+
+.med-preset-group {
+    position: sticky;
+    top: 0;
+    padding: 4px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #6b7280;
+    background: #f3f4f6;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.med-preset-item {
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    color: #1f2937;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.med-preset-item:hover,
+.med-preset-item.active {
+    background: #eff6ff;
+    color: #1d4ed8;
 }

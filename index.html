@@ -22,19 +22,23 @@
             <h1 class="text-xl font-bold"><i class="fas fa-notes-medical mr-2"></i>รายงานคนไข้ Home Ward</h1>
 
             <div class="flex flex-wrap gap-2 items-center">
-                <!-- Font Size Controls (Easy Access) -->
-                <div class="bg-white/95 text-gray-900 rounded-lg p-0.5 flex items-center gap-1 shadow">
+                <!-- Font Size Controls -->
+                <div class="flex items-center bg-white/20 backdrop-blur rounded-full px-1 py-0.5 gap-0.5">
                     <button type="button" data-action="stepFontSize" data-arg="-1"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
-                        aria-label="ลดขนาดตัวอักษร">A-</button>
+                        class="w-8 h-8 rounded-full text-white/90 hover:bg-white/20 active:bg-white/30 font-bold text-sm flex items-center justify-center transition"
+                        aria-label="ลดขนาดตัวอักษร">
+                        <i class="fas fa-minus text-xs"></i>
+                    </button>
                     <button type="button" data-action="resetFontSize"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
+                        class="min-w-[2.5rem] h-8 rounded-full text-white font-bold text-xs flex items-center justify-center gap-1 hover:bg-white/20 active:bg-white/30 transition px-1.5"
                         aria-label="รีเซ็ตขนาดตัวอักษร">
-                        <span id="fontSizeLabel">16</span>
+                        <i class="fas fa-font text-[10px] opacity-70"></i><span id="fontSizeLabel">16</span>
                     </button>
                     <button type="button" data-action="stepFontSize" data-arg="1"
-                        class="bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold text-base w-12 h-10 rounded-lg border border-gray-300 flex items-center justify-center"
-                        aria-label="เพิ่มขนาดตัวอักษร">A+</button>
+                        class="w-8 h-8 rounded-full text-white/90 hover:bg-white/20 active:bg-white/30 font-bold text-sm flex items-center justify-center transition"
+                        aria-label="เพิ่มขนาดตัวอักษร">
+                        <i class="fas fa-plus text-xs"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -250,35 +254,27 @@
             <div id="headerHiddenNotice"
                 class="hidden py-1 px-3 mb-0.5">
                 <div class="flex flex-wrap items-center justify-between gap-2">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-gray-900 font-semibold text-sm flex items-center gap-1.5">
-                            <i class="fas fa-edit"></i>
-                            <span>การแก้ไขข้อมูล:</span>
-                        </span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-gray-500 font-semibold text-xs whitespace-nowrap"><i class="fas fa-edit mr-1"></i>แก้ไขข้อมูล:</span>
                         <button type="button" data-action="editPatientData"
-                            class="text-xs font-bold bg-white border border-gray-300 text-gray-700 px-2.5 py-1.5 rounded-md hover:bg-gray-50 transition flex items-center gap-1.5">
-                            <i class="fas fa-user"></i>
-                            <span>คนไข้</span>
+                            class="text-xs font-bold bg-white border border-gray-300 text-gray-700 px-2 py-1 rounded-md hover:bg-gray-50 transition flex items-center gap-1">
+                            <i class="fas fa-user"></i>คนไข้
                         </button>
                         <button type="button" data-action="openAdmissionDataModal"
-                            class="text-xs font-bold bg-white border border-orange-300 text-orange-800 px-2.5 py-1.5 rounded-md hover:bg-orange-50 transition flex items-center gap-1.5">
-                            <i class="fas fa-clipboard-list"></i>
-                            <span>Admission</span>
+                            class="text-xs font-bold bg-white border border-orange-300 text-orange-800 px-2 py-1 rounded-md hover:bg-orange-50 transition flex items-center gap-1">
+                            <i class="fas fa-clipboard-list"></i>Admission
                         </button>
                         <button type="button" data-action="openAdmissionOrdersModal"
-                            class="text-xs font-bold bg-white border border-orange-300 text-orange-800 px-2.5 py-1.5 rounded-md hover:bg-orange-50 transition flex items-center gap-1.5">
-                            <i class="fas fa-pills"></i>
-                            <span>Orders</span>
+                            class="text-xs font-bold bg-white border border-orange-300 text-orange-800 px-2 py-1 rounded-md hover:bg-orange-50 transition flex items-center gap-1">
+                            <i class="fas fa-pills"></i>Orders
                         </button>
                         <button type="button" data-action="openCurrentMedicationsModal"
-                            class="text-xs font-bold bg-white border border-purple-300 text-purple-800 px-2.5 py-1.5 rounded-md hover:bg-purple-50 transition flex items-center gap-1.5">
-                            <i class="fas fa-capsules"></i>
-                            <span>รายการยา</span>
+                            class="text-xs font-bold bg-white border border-purple-300 text-purple-800 px-2 py-1 rounded-md hover:bg-purple-50 transition flex items-center gap-1">
+                            <i class="fas fa-capsules"></i>ยา
                         </button>
                         <button type="button" data-action="openInitialPlanModal"
-                            class="text-xs font-bold bg-white border border-blue-300 text-blue-800 px-2.5 py-1.5 rounded-md hover:bg-blue-50 transition flex items-center gap-1.5">
-                            <i class="fas fa-tasks"></i>
-                            <span>แผนแรกรับ</span>
+                            class="text-xs font-bold bg-white border border-blue-300 text-blue-800 px-2 py-1 rounded-md hover:bg-blue-50 transition flex items-center gap-1">
+                            <i class="fas fa-tasks"></i>แผนแรกรับ
                         </button>
                     </div>
                 </div>
@@ -350,15 +346,22 @@
                     <div class="flex items-center justify-between mb-1">
                         <label class="block text-base font-bold text-amber-900"><i
                                 class="fas fa-hourglass-half mr-1"></i> คำสั่งวันเดียว (One Day Order)</label>
-                        <button type="button" data-action="insertOrderTemplate" data-arg="oneDay"
-                            class="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-200 transition">
-                            แทรกเทมเพลต
-                        </button>
+                        <div class="flex gap-2">
+                            <button type="button" data-action="insertOrderTemplate" data-arg="oneDay"
+                                class="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-200 transition">
+                                แทรกเทมเพลต
+                            </button>
+                            <button type="button" data-action="openMedModalForAdmit" data-arg="inputOneDay_Admit"
+                                class="text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-200 transition">
+                                <i class="fas fa-pills mr-1"></i>สั่งยา
+                            </button>
+                        </div>
                     </div>
                     <textarea id="inputOneDay_Admit" rows="3"
                         class="w-full border border-amber-200 rounded-lg p-3 text-base font-mono focus:ring-amber-200 focus:border-amber-500"
                         placeholder="NSS 1000 ml IV 80 ml/hr..." data-autobullet="true"
                         data-onfocus="seedBulletOnFocus:event" data-onkeydown="handleBulletKeydown:event"></textarea>
+                    <p class="text-sm text-blue-600 mt-1"><i class="fas fa-lightbulb mr-1 text-blue-500"></i>สั่ง IV fluid, ยาฉีด หรือยาอื่นๆ ได้ง่ายขึ้นด้วยปุ่ม <strong>"สั่งยา"</strong> ด้านบน</p>
                 </div>
 
                 <div>
@@ -370,94 +373,20 @@
                                 class="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-200 transition">
                                 แทรกเทมเพลต
                             </button>
-                            <button data-action="copyAdmitMedsToHeader"
-                                class="text-sm bg-amber-100 text-amber-900 border border-amber-200 px-3 py-2 rounded-lg hover:bg-amber-200 transition flex items-center gap-2">
-                                <i class="fas fa-arrow-up"></i> คัดลอกไปรายการยาปัจจุบัน
+                            <button type="button" data-action="openMedModalForAdmit" data-arg="inputCont_Admit"
+                                class="text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-200 transition">
+                                <i class="fas fa-pills mr-1"></i>สั่งยา
                             </button>
                         </div>
                     </div>
                     <textarea id="inputCont_Admit" rows="4"
                         class="w-full border border-amber-200 rounded-lg p-3 text-base font-mono focus:ring-amber-200 focus:border-amber-500"
-                        placeholder="DTX premeal ช ย&#10;Novomix 18-0-8 sc ac ช ย #1&#10;Simvastatin (20) 1x1 o hs #30"
+                        placeholder="• DTX premeal&#10;• Novomix 18-0-8 sc ac #1&#10;• Simvastatin (20) 1x1 po hs #30"
                         data-autobullet="true" data-onfocus="seedBulletOnFocus:event"
                         data-onkeydown="handleBulletKeydown:event"></textarea>
-                    <p class="text-sm text-gray-700 mt-1">*พิมพ์คำสั่งยาที่นี่
-                        แล้วกดปุ่มด้านบนเพื่ออัปเดตรายการยาใน Header</p>
+                    <p class="text-sm text-blue-600 mt-1"><i class="fas fa-lightbulb mr-1 text-blue-500"></i>แนะนำใช้ปุ่ม <strong>"สั่งยา"</strong> ด้านบนเพื่อเพิ่มยา — จะได้ format ถูกต้องอัตโนมัติ</p>
+                    <p class="text-sm text-gray-500 mt-0.5"><i class="fas fa-info-circle mr-1"></i>ยาจะถูกคัดลอกไปรายการยาปัจจุบันอัตโนมัติเมื่อบันทึก</p>
 
-                    <div class="mt-3 rounded-lg border border-amber-200 bg-white">
-                        <div class="flex items-center justify-between px-3 py-2 border-b border-amber-100">
-                            <div class="text-sm font-bold text-amber-900">
-                                <i class="fas fa-prescription-bottle-alt mr-1"></i>ช่วยสร้างรายการยา
-                            </div>
-                            <button type="button" data-action="toggleOrderBuilder"
-                                class="text-xs font-bold text-amber-700 hover:text-amber-900">
-                                ซ่อน/แสดง
-                            </button>
-                        </div>
-                        <div id="orderBuilderBody" class="p-3 space-y-3">
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <input id="orderBuilderName" type="text"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="ชื่อยา เช่น Losartan">
-                                <input id="orderBuilderStrength" type="text"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="ขนาดยา เช่น 50mg หรือ (20)">
-                            </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                                <input id="orderBuilderDose" type="text" inputmode="decimal"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="จำนวน/ครั้ง เช่น 1/2">
-                                <input id="orderBuilderFreq" type="number" min="1" step="1"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="ครั้ง/วัน">
-                                <input id="orderBuilderRoute" list="routeList" type="text"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="Route (po, iv, im...)">
-                                <datalist id="routeList">
-                                    <option value="o">o (oral)</option>
-                                    <option value="po">po</option>
-                                    <option value="iv">IV</option>
-                                    <option value="im">IM</option>
-                                    <option value="sc">SC</option>
-                                    <option value="pr">PR</option>
-                                    <option value="inh">INH</option>
-                                    <option value="top">Topical</option>
-                                </datalist>
-                                <input id="orderBuilderTiming" list="timingList" type="text"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="Timing (pc, ac, hs...)">
-                                <datalist id="timingList">
-                                    <option value="ac">ac (ก่อนอาหาร)</option>
-                                    <option value="pc">pc (หลังอาหาร)</option>
-                                    <option value="hs">hs (ก่อนนอน)</option>
-                                    <option value="prn">prn</option>
-                                    <option value="stat">stat</option>
-                                </datalist>
-                            </div>
-                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                <input id="orderBuilderQty" type="number" min="1" step="1"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                    placeholder="# จำนวนยา">
-                                <select id="orderBuilderType"
-                                    class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
-                                    <option value="continuous">ยาต่อเนื่อง</option>
-                                    <option value="oneDay">คำสั่งวันเดียว</option>
-                                </select>
-                                <div class="flex items-center justify-end gap-2">
-                                    <button type="button" data-action="clearOrderBuilder"
-                                        class="px-3 py-2 text-sm font-bold bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">ล้าง</button>
-                                    <button type="button" data-action="addOrderFromBuilder"
-                                        class="px-3 py-2 text-sm font-bold bg-amber-600 text-white rounded-lg hover:bg-amber-700">เพิ่มลงรายการ</button>
-                                </div>
-                            </div>
-                            <div class="mt-2 p-2 bg-gray-50 border border-gray-200 rounded-lg">
-                                <p class="text-xs text-gray-600 mb-1">Preview:</p>
-                                <p id="orderBuilderPreview" class="text-sm font-mono text-gray-800">
-                                    Losartan 50mg 1x1 o pc #30
-                                </p>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <div>
@@ -553,12 +482,16 @@
                             </button>
                         </div>
                         <div id="treatmentReviewContOrders" class="mb-2 hidden">
-                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-clipboard-list text-amber-600 mr-1"></i>Continuous Orders</div>
+                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-clipboard-list text-amber-600 mr-1"></i>Continuous Orders (แรกรับ)</div>
                             <div id="treatmentReviewContList" class="text-sm text-gray-800 whitespace-pre-line bg-amber-50 rounded p-2 border border-amber-200"></div>
                         </div>
-                        <div id="treatmentReviewMeds" class="mb-1">
-                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-capsules text-green-600 mr-1"></i>รายการยาปัจจุบัน</div>
+                        <div id="treatmentReviewMeds" class="mb-2">
+                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-capsules text-green-600 mr-1"></i>รายการยาปัจจุบัน (หลังปรับยา)</div>
                             <div id="treatmentReviewMedsList" class="space-y-1"></div>
+                        </div>
+                        <div id="treatmentReviewStopped" class="mb-1 hidden">
+                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-ban text-red-500 mr-1"></i>ยาที่เคยหยุด</div>
+                            <div id="treatmentReviewStoppedList" class="space-y-1"></div>
                         </div>
                     </div>
                     <div id="admissionSummaryNoteRow" class="hidden mt-3 border-t border-blue-100 pt-2">
@@ -932,7 +865,7 @@
                             </div>
                             <textarea id="inputAP" rows="4"
                                 class="block w-full border border-gray-300 rounded-lg shadow-sm p-3 text-base focus:ring-blue-200 focus:border-blue-500 resize-none overflow-hidden"
-                                placeholder="พิมพ์แผนการรักษา (1 บรรทัดต่อ 1 ข้อ)&#10;• เจาะเลือดพรุ่งนี้เช้า&#10;• ปรับยาแก้ปวดเป็น PRN&#10;• นัดตรวจซ้ำพรุ่งนี้เช้า"
+                                placeholder="พิมพ์แผนการรักษา (1 บรรทัดต่อ 1 ข้อ)&#10;• ปรับยา (ใช้ปุ่มปรับยาด้านบน)&#10;• แนะนำควบคุมอาหาร งดหวาน มัน เค็ม&#10;• F/U โทรติดตามอาการพรุ่งนี้"
                                 data-autobullet="true" data-onfocus="seedBulletOnFocus:event"
                                 data-onkeydown="handleBulletKeydown:event"></textarea>
                             <div id="medsChangedStatusRow" class="mt-2 hidden flex items-center bg-amber-50 p-2 rounded border border-amber-200">
@@ -1139,91 +1072,9 @@
         </div>
     </div>
 
-    <!-- Meds Change Modal -->
-    <div id="medsChangeModal"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-        <div class="relative bg-white w-full max-w-lg rounded-xl shadow-2xl p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-2"><i class="fas fa-notes-medical text-amber-600 mr-2"></i>
-                ปรับยา</h2>
-            
-            <!-- Tab Navigation -->
-            <div class="flex border-b border-gray-200 mb-4">
-                <button type="button" data-action="switchMedsTab" data-arg="list"
-                    class="meds-tab-btn flex-1 px-4 py-2 text-sm font-bold text-amber-600 border-b-2 border-amber-600 bg-amber-50"
-                    data-tab="list">
-                    <i class="fas fa-list mr-1"></i> รายการยา
-                </button>
-                <button type="button" data-action="switchMedsTab" data-arg="history"
-                    class="meds-tab-btn flex-1 px-4 py-2 text-sm font-bold text-gray-600 border-b-2 border-transparent hover:text-gray-800"
-                    data-tab="history">
-                    <i class="fas fa-history mr-1"></i> ประวัติ
-                </button>
-                <button type="button" data-action="switchMedsTab" data-arg="active"
-                    class="meds-tab-btn flex-1 px-4 py-2 text-sm font-bold text-gray-600 border-b-2 border-transparent hover:text-gray-800"
-                    data-tab="active">
-                    <i class="fas fa-check-circle mr-1"></i> ยาที่ใช้อยู่
-                </button>
-            </div>
-            
-            <!-- Tab: รายการยา -->
-            <div id="medsTab-list" class="meds-tab-content">
-                <p class="text-sm text-gray-600 mb-3">แตะรายการยาที่ต้องการแก้ไข (รายการที่แก้จะขึ้นสีแดง)</p>
-                
-                <!-- Search/Filter -->
-                <div class="mb-3">
-                    <div class="relative">
-                        <input type="text" id="medsModalSearchInput" placeholder="ค้นหายา..."
-                            class="w-full border border-gray-300 rounded-lg px-4 py-2 pl-10 text-sm focus:ring-2 focus:ring-amber-200 focus:border-amber-500 outline-none"
-                            data-oninput="filterMedsChangeList">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    </div>
-                </div>
-                
-                <!-- Batch Actions -->
-                <div class="flex flex-wrap gap-2 mb-3">
-                    <button type="button" data-action="addMedsNewRow"
-                        class="inline-flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm font-bold text-green-900 hover:bg-green-100">
-                        <i class="fas fa-plus-circle"></i> เพิ่มยาใหม่
-                    </button>
-                    <button type="button" data-action="undoMedsChanges"
-                        class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-undo"></i> Undo
-                    </button>
-                    <button type="button" data-action="redoMedsChanges"
-                        class="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm font-bold text-gray-700 hover:bg-gray-100">
-                        <i class="fas fa-redo"></i> Redo
-                    </button>
-                </div>
-                
-                <div id="medsChangeList" class="space-y-2 max-h-72 overflow-y-auto pr-1"></div>
-                <p id="medsChangeEmpty" class="hidden text-sm text-gray-500 mt-2">ยังไม่มีรายการยาในช่อง "รายการยาที่ใช้อยู่"
-                </p>
-            </div>
-            
-            <!-- Tab: ประวัติ -->
-            <div id="medsTab-history" class="meds-tab-content hidden">
-                <div id="medsHistoryList" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
-                <p id="medsHistoryEmpty" class="hidden text-sm text-gray-500 mt-2">ยังไม่มีประวัติการปรับยา
-                </p>
-            </div>
-            
-            <!-- Tab: ยาที่ใช้อยู่ -->
-            <div id="medsTab-active" class="meds-tab-content hidden">
-                <div id="medsActiveList" class="space-y-2 max-h-96 overflow-y-auto pr-1"></div>
-                <p id="medsActiveEmpty" class="hidden text-sm text-gray-500 mt-2">ไม่มียาที่ใช้อยู่
-                </p>
-            </div>
-            
-            <textarea id="medsChangedList" class="hidden" aria-hidden="true"></textarea>
-            <textarea id="medsChangeBaseline" class="hidden" aria-hidden="true"></textarea>
-            <div class="flex justify-end space-x-3 mt-4">
-                <button data-action="closeMedsChangeModalDiscard"
-                    class="px-5 py-3 bg-gray-100 text-gray-800 rounded-lg hover:bg-gray-200 font-bold">ปิด</button>
-                <button id="medsSaveButton" data-action="saveMedsChanges"
-                    class="px-5 py-3 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600">บันทึก</button>
-            </div>
-        </div>
-    </div>
+    <!-- Hidden textareas for medication change tracking (used by inline editing system) -->
+    <textarea id="medsChangedList" class="hidden" aria-hidden="true"></textarea>
+    <textarea id="medsChangeBaseline" class="hidden" aria-hidden="true"></textarea>
 
     <!-- NEW CASE CONFIRM MODAL (Fixes the issue with blocked confirm()) -->
     <div id="newCaseModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
@@ -1585,7 +1436,7 @@
                     <div class="border border-gray-200 rounded-lg p-2">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="ncdNephropathy" data-toggle="ncdNephropathyFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">โรคไต (คัดกรองด้วย UPCR, Cr/eGFR)</span>
+                            <span class="text-sm text-gray-700">โรคไต (UPCR, Cr/eGFR)</span>
                         </label>
                         <div id="ncdNephropathyFields" class="mt-2 hidden">
                             <div class="flex gap-2 mb-2">
@@ -1597,13 +1448,13 @@
                                 </button>
                             </div>
                             <input type="text" id="ncdNephropathyResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, microalbuminuria)">
+                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผล (เช่น normal, microalbuminuria)">
                         </div>
                     </div>
                     <div class="border border-gray-200 rounded-lg p-2">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="ncdRetinopathy" data-toggle="ncdRetinopathyFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">โรคจอปติก (ตรวจตา)</span>
+                            <span class="text-sm text-gray-700">จอประสาทตา (Fundoscopy)</span>
                         </label>
                         <div id="ncdRetinopathyFields" class="mt-2 hidden">
                             <div class="flex gap-2 mb-2">
@@ -1615,49 +1466,13 @@
                                 </button>
                             </div>
                             <input type="text" id="ncdRetinopathyResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, mild DR)">
-                        </div>
-                    </div>
-                    <div class="border border-gray-200 rounded-lg p-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="ncdNeuropathy" data-toggle="ncdNeuropathyFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">โรคประสาท (ตรวจความรู้สึกแขนขา)</span>
-                        </label>
-                        <div id="ncdNeuropathyFields" class="mt-2 hidden">
-                            <div class="flex gap-2 mb-2">
-                                <input type="date" id="ncdNeuropathyDate"
-                                    class="flex-1 border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white">
-                                <button type="button" data-action="copyNcdDate" data-pass="event" data-source="ncdNeuropathyDate"
-                                    class="hidden px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-600" title="คัดลอกวันที่ไปยังรายการที่ check">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <input type="text" id="ncdNeuropathyResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, mild DPN)">
-                        </div>
-                    </div>
-                    <div class="border border-gray-200 rounded-lg p-2">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="ncdCardiovascular" data-toggle="ncdCardiovascularFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">โรคหลอดเลือด (ECG, Lipid profile)</span>
-                        </label>
-                        <div id="ncdCardiovascularFields" class="mt-2 hidden">
-                            <div class="flex gap-2 mb-2">
-                                <input type="date" id="ncdCardiovascularDate"
-                                    class="flex-1 border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white">
-                                <button type="button" data-action="copyNcdDate" data-pass="event" data-source="ncdCardiovascularDate"
-                                    class="hidden px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-600" title="คัดลอกวันที่ไปยังรายการที่ check">
-                                    <i class="fas fa-copy"></i>
-                                </button>
-                            </div>
-                            <input type="text" id="ncdCardiovascularResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, abnormal)">
+                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผล (เช่น normal, mild NPDR)">
                         </div>
                     </div>
                     <div class="border border-gray-200 rounded-lg p-2">
                         <label class="flex items-center gap-2 cursor-pointer">
                             <input type="checkbox" id="ncdFoot" data-toggle="ncdFootFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">ตรวจเท้า (Foot exam)</span>
+                            <span class="text-sm text-gray-700">ตรวจเท้า (Foot exam + Neuropathy)</span>
                         </label>
                         <div id="ncdFootFields" class="mt-2 hidden">
                             <div class="flex gap-2 mb-2">
@@ -1669,25 +1484,43 @@
                                 </button>
                             </div>
                             <input type="text" id="ncdFootResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, high risk)">
+                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผล (เช่น normal, loss of sensation, high risk)">
                         </div>
                     </div>
                     <div class="border border-gray-200 rounded-lg p-2">
                         <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" id="ncdLipid" data-toggle="ncdLipidFields" class="w-4 h-4 text-green-600 rounded">
-                            <span class="text-sm text-gray-700">ไขมันในเลือด (Lipid profile)</span>
+                            <input type="checkbox" id="ncdCardiovascular" data-toggle="ncdCardiovascularFields" class="w-4 h-4 text-green-600 rounded">
+                            <span class="text-sm text-gray-700">หลอดเลือดหัวใจ (Thai CV risk / ECG)</span>
                         </label>
-                        <div id="ncdLipidFields" class="mt-2 hidden">
+                        <div id="ncdCardiovascularFields" class="mt-2 hidden">
                             <div class="flex gap-2 mb-2">
-                                <input type="date" id="ncdLipidDate"
+                                <input type="date" id="ncdCardiovascularDate"
                                     class="flex-1 border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white">
-                                <button type="button" data-action="copyNcdDate" data-pass="event" data-source="ncdLipidDate"
+                                <button type="button" data-action="copyNcdDate" data-pass="event" data-source="ncdCardiovascularDate"
                                     class="hidden px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-600" title="คัดลอกวันที่ไปยังรายการที่ check">
                                     <i class="fas fa-copy"></i>
                                 </button>
                             </div>
-                            <input type="text" id="ncdLipidResult"
-                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผลการคัดกรอง (เช่น normal, high LDL)">
+                            <input type="text" id="ncdCardiovascularResult"
+                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผล (เช่น low risk, normal ECG)">
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="ncdDental" data-toggle="ncdDentalFields" class="w-4 h-4 text-green-600 rounded">
+                            <span class="text-sm text-gray-700">สุขภาพช่องปาก (Dental exam)</span>
+                        </label>
+                        <div id="ncdDentalFields" class="mt-2 hidden">
+                            <div class="flex gap-2 mb-2">
+                                <input type="date" id="ncdDentalDate"
+                                    class="flex-1 border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white">
+                                <button type="button" data-action="copyNcdDate" data-pass="event" data-source="ncdDentalDate"
+                                    class="hidden px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs text-gray-600" title="คัดลอกวันที่ไปยังรายการที่ check">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </div>
+                            <input type="text" id="ncdDentalResult"
+                                class="w-full border border-gray-300 rounded-lg h-9 px-2 text-sm bg-white" placeholder="ผล (เช่น normal, periodontitis)">
                         </div>
                     </div>
                 </div>
@@ -2149,7 +1982,8 @@
                     </div>
                     <textarea id="modalInputOneDay" rows="4"
                         class="w-full border border-orange-200 rounded-lg p-3 text-base font-mono focus:ring-orange-200 focus:border-orange-500"
-                        placeholder="NSS 1000 ml IV 80 ml/hr..."></textarea>
+                        placeholder="NSS 1000 ml IV 80 ml/hr..."
+                        data-autobullet="true" data-onfocus="seedBulletOnFocus:event" data-onkeydown="handleBulletKeydown:event"></textarea>
                 </div>
 
                 <div>
@@ -2170,7 +2004,9 @@
                     </div>
                     <textarea id="modalInputContinuous" rows="6"
                         class="w-full border border-orange-200 rounded-lg p-3 text-base font-mono focus:ring-orange-200 focus:border-orange-500"
-                        placeholder="• Metformin 500mg 1x2 po pc #60&#10;• Amlodipine 5mg 1x1 po #30"></textarea>
+                        placeholder="• Metformin (500) 1x2 po pc #60&#10;• Amlodipine (5) 1x1 po pc #30"
+                        data-autobullet="true" data-onfocus="seedBulletOnFocus:event" data-onkeydown="handleBulletKeydown:event"></textarea>
+                    <p class="text-sm text-blue-600 mt-1"><i class="fas fa-lightbulb mr-1 text-blue-500"></i>แนะนำใช้ปุ่ม <strong>"จัดการยา"</strong> ด้านบนเพื่อเพิ่มยา — จะได้ format ถูกต้องอัตโนมัติ</p>
                 </div>
             </div>
 
@@ -2205,11 +2041,12 @@
                     </label>
                     <p class="text-sm text-gray-600 mb-2">
                         <i class="fas fa-info-circle text-blue-500 mr-1"></i>
-                        กรอกรายการยาในรูปแบบ: • [ชื่อยา]([ขนาด]) [dose]x[freq] [route] [timing] #[จำนวน]
+                        กรอกรายการยาในรูปแบบ: • [ชื่อยา] ([ขนาด]) [dose]x[freq] [route] [timing] #[จำนวน]
                     </p>
                     <textarea id="modalPMedsCont" rows="8"
                         class="w-full border border-purple-200 rounded-lg p-3 text-base font-mono focus:ring-purple-200 focus:border-purple-500 bg-purple-50"
-                        placeholder="• Metformin(500) 1x2 po pc #60&#10;• Amlodipine(5) 1x1 po #30&#10;• Atorvastatin(20) 1x1 po hs #30"></textarea>
+                        placeholder="• Metformin (500) 1x2 po pc #60&#10;• Amlodipine (5) 1x1 po pc #30&#10;• Atorvastatin (20) 1x1 po hs #30"
+                        data-autobullet="true" data-onfocus="seedBulletOnFocus:event" data-onkeydown="handleBulletKeydown:event"></textarea>
                 </div>
                 <div>
                     <label class="block text-base font-bold text-gray-800 mb-1">วันที่ปรับยาล่าสุด</label>
@@ -2254,7 +2091,7 @@
                     </p>
                     <textarea id="modalInputPlanMx" rows="6"
                         class="w-full border border-blue-200 rounded-lg p-3 text-base focus:ring-blue-200 focus:border-blue-500 bg-blue-50"
-                        placeholder="• แนะนำควบคุมอาหาร&#10;• นัดติดตามอาการ 1 สัปดาห์&#10;• ตรวจ HbA1c ซ้ำใน 3 เดือน"></textarea>
+                        placeholder="• แนะนำควบคุมอาหาร งดหวาน มัน เค็ม&#10;• F/U โทรติดตามอาการ 1 สัปดาห์&#10;• นัดเจาะ HbA1c ซ้ำใน 3 เดือน"></textarea>
                 </div>
             </div>
 
@@ -2266,6 +2103,76 @@
                 <button type="button" data-action="saveInitialPlanFromModal"
                     class="flex-1 rounded-lg border border-transparent px-5 py-3 bg-blue-600 text-white hover:bg-blue-700 font-bold flex items-center justify-center gap-2">
                     <i class="fas fa-save"></i> บันทึกแผนการรักษา
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMISSION NOTE VIEW MODAL (read-only) -->
+    <div id="admissionNoteViewModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="relative bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <h3 class="text-lg font-bold text-gray-900">
+                    <i class="fas fa-clipboard-list text-orange-600 mr-2"></i>ประวัติแรกรับ (Admission Note)
+                </h3>
+                <button type="button" data-action="closeAdmissionNoteViewModal"
+                    class="text-gray-500 hover:text-gray-800 text-2xl leading-none" aria-label="ปิด">×</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5">CC (Chief Complaint)</label>
+                    <div id="viewCC" class="text-sm text-gray-900 bg-gray-50 rounded-lg p-3 border border-gray-200 whitespace-pre-line min-h-[2rem]">-</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5">HPI (History of Present Illness)</label>
+                    <div id="viewHPI" class="text-sm text-gray-900 bg-gray-50 rounded-lg p-3 border border-gray-200 whitespace-pre-line min-h-[2rem]">-</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5">PMH (Past Medical History)</label>
+                    <div id="viewPMH" class="text-sm text-gray-900 bg-gray-50 rounded-lg p-3 border border-gray-200 whitespace-pre-line min-h-[2rem]">-</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5">FHx (Family History)</label>
+                    <div id="viewFHx" class="text-sm text-gray-900 bg-gray-50 rounded-lg p-3 border border-gray-200 whitespace-pre-line min-h-[2rem]">-</div>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button type="button" data-action="closeAdmissionNoteViewModal"
+                    class="rounded-lg border border-gray-300 px-5 py-2.5 bg-white text-gray-800 hover:bg-gray-50 font-bold">
+                    ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMISSION ORDERS VIEW MODAL (read-only) -->
+    <div id="admissionOrdersViewModal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center">
+        <div class="relative bg-white w-full max-w-2xl rounded-xl shadow-2xl p-6 mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-start justify-between gap-3 mb-4">
+                <h3 class="text-lg font-bold text-gray-900">
+                    <i class="fas fa-pills text-orange-600 mr-2"></i>Admission Orders
+                </h3>
+                <button type="button" data-action="closeAdmissionOrdersViewModal"
+                    class="text-gray-500 hover:text-gray-800 text-2xl leading-none" aria-label="ปิด">×</button>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5"><i class="fas fa-hourglass-half text-amber-600 mr-1"></i>คำสั่งวันเดียว (One Day Order)</label>
+                    <div id="viewOneDay" class="text-sm text-gray-900 bg-amber-50 rounded-lg p-3 border border-amber-200 whitespace-pre-line min-h-[2rem] font-mono">-</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5"><i class="fas fa-sync-alt text-amber-600 mr-1"></i>ยาต่อเนื่อง (Continuous Order)</label>
+                    <div id="viewContinuous" class="text-sm text-gray-900 bg-amber-50 rounded-lg p-3 border border-amber-200 whitespace-pre-line min-h-[2rem] font-mono">-</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5"><i class="fas fa-tasks text-blue-600 mr-1"></i>แผนแรกรับ (Plan/Management)</label>
+                    <div id="viewPlanMx" class="text-sm text-gray-900 bg-blue-50 rounded-lg p-3 border border-blue-200 whitespace-pre-line min-h-[2rem]">-</div>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button type="button" data-action="closeAdmissionOrdersViewModal"
+                    class="rounded-lg border border-gray-300 px-5 py-2.5 bg-white text-gray-800 hover:bg-gray-50 font-bold">
+                    ปิด
                 </button>
             </div>
         </div>
@@ -2306,9 +2213,9 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                         <div class="col-span-2">
                             <label class="block text-xs text-gray-600 font-semibold mb-1">ชื่อยา</label>
-                            <input type="text" id="medOrderName"
+                            <input type="text" id="medOrderName" autocomplete="off"
                                 class="w-full border border-gray-300 rounded-lg h-10 px-3 text-base"
-                                placeholder="Metformin">
+                                placeholder="พิมพ์ชื่อยา เช่น met, amlo, losartan...">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 font-semibold mb-1">ขนาด</label>
@@ -2420,7 +2327,7 @@
                         <div class="flex gap-2">
                             <input type="text" id="medAdjustNewMed"
                                 class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="เพิ่มยาใหม่ เช่น • Amlodipine(5) 1x1 po pc #30">
+                                placeholder="เพิ่มยาใหม่ เช่น • Amlodipine (5) 1x1 po pc #30">
                             <button type="button" data-action="addNewMedFromAdjust"
                                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold text-sm whitespace-nowrap">
                                 <i class="fas fa-plus mr-1"></i>เพิ่ม

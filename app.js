@@ -226,7 +226,6 @@ const ACTION_HANDLERS = Object.freeze({
     editAdmissionOrders,
     toggleHeaderMode,
     saveAdmissionNote,
-    copyAdmitMedsToHeader,
     saveAdmissionOrders,
     toggleAdmissionNoteDetails,
     toggleAdmissionPlanDetails,
@@ -239,9 +238,6 @@ const ACTION_HANDLERS = Object.freeze({
     closeOrderTemplateModal,
     clearOrderTemplateSelection,
     insertSelectedTemplates,
-    toggleOrderBuilder,
-    addOrderFromBuilder,
-    clearOrderBuilder,
     openTimePicker,
     openBpModal,
     toggleDtxHi,
@@ -264,12 +260,6 @@ const ACTION_HANDLERS = Object.freeze({
     setReportView,
     closeReportModal,
     copyReportToClipboard,
-    switchMedsTab,
-    addMedsNewRow,
-    undoMedsChanges,
-    redoMedsChanges,
-    closeMedsChangeModalDiscard,
-    saveMedsChanges,
     closeConfirmation,
     executeNewCase,
     executeClearForm,
@@ -296,6 +286,7 @@ const ACTION_HANDLERS = Object.freeze({
     clearPsychInputs,
     addPsychToOExtra,
     openMedModal,
+    openMedModalForAdmit,
     closeMedModal,
     refreshTreatmentReview,
     closeCopyModal,
@@ -324,7 +315,6 @@ const ACTION_HANDLERS = Object.freeze({
     addNewMedFromAdjust,
     saveMedAdjustChanges,
     applyDateSelection,
-    filterMedsChangeList,
     filterMedsList,
     handleBulletKeydown,
     handleDateChange,
@@ -461,11 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load medication data
     loadMedicationData();
     
-    // Initialize Order Builder preview
-    initOrderBuilderPreview();
-    
     // Initialize Med Order preview (new 2-tab system)
     initMedOrderPreview();
+
+    // Initialize Med Preset search/autofill dropdown
+    initMedPresetSearch();
 
     // Sync mobile age mirror inputs with the real pAge input
     initAgeMirrorSync();
@@ -1463,70 +1453,7 @@ function initOrdersStore() {
     syncOrdersStoreFromUI({ source: ordersStore.current?.source || 'manual' });
 }
 
-function buildOrderLineFromBuilder({ name, strength, dose, freq, route, timing, qty }) {
-    const parts = [];
-    const trimmedName = String(name || '').trim();
-    if (!trimmedName) return '';
-    parts.push(trimmedName);
-    const strengthText = normalizeOrderStrengthInput(strength);
-    if (strengthText) parts.push(strengthText);
-    const doseText = String(dose || '').trim();
-    const freqText = String(freq || '').trim();
-    if (doseText && freqText) {
-        parts.push(`${doseText}x${freqText}`);
-    } else if (doseText) {
-        parts.push(doseText);
-    }
-    if (route) parts.push(route);
-    if (timing) parts.push(timing);
-    if (qty) parts.push(`#${qty}`);
-    return parts.join(' ').replace(/\s+/g, ' ').trim();
-}
-
-function updateOrderBuilderPreview() {
-    const name = document.getElementById('orderBuilderName')?.value || '';
-    const strength = document.getElementById('orderBuilderStrength')?.value || '';
-    const dose = document.getElementById('orderBuilderDose')?.value || '';
-    const freq = document.getElementById('orderBuilderFreq')?.value || '';
-    const route = document.getElementById('orderBuilderRoute')?.value || '';
-    const timing = document.getElementById('orderBuilderTiming')?.value || '';
-    const qty = document.getElementById('orderBuilderQty')?.value || '';
-
-    const preview = buildOrderLineFromBuilder({
-        name,
-        strength,
-        dose,
-        freq,
-        route,
-        timing,
-        qty
-    });
-
-    const previewEl = document.getElementById('orderBuilderPreview');
-    if (previewEl) {
-        previewEl.textContent = preview || 'กรอกข้อมูลเพื่อดู preview...';
-    }
-}
-
-function initOrderBuilderPreview() {
-    const fields = [
-        'orderBuilderName',
-        'orderBuilderStrength',
-        'orderBuilderDose',
-        'orderBuilderFreq',
-        'orderBuilderRoute',
-        'orderBuilderTiming',
-        'orderBuilderQty'
-    ];
-
-    fields.forEach(fieldId => {
-        const field = document.getElementById(fieldId);
-        if (field) {
-            field.addEventListener('input', updateOrderBuilderPreview);
-            field.addEventListener('change', updateOrderBuilderPreview);
-        }
-    });
-}
+// Order Builder removed — use Med Modal Tab สั่งยา instead
 
 function appendOrderLineToTextarea(textareaId, line) {
     const textarea = document.getElementById(textareaId);
@@ -1543,68 +1470,6 @@ function appendOrderLineToTextarea(textareaId, line) {
     resizeTextareaToContent(textarea);
 }
 
-function toggleOrderBuilder() {
-    const body = document.getElementById('orderBuilderBody');
-    if (!body) return;
-    body.classList.toggle('hidden');
-}
-
-function clearOrderBuilder() {
-    const ids = [
-        'orderBuilderName',
-        'orderBuilderStrength',
-        'orderBuilderDose',
-        'orderBuilderFreq',
-        'orderBuilderRoute',
-        'orderBuilderTiming',
-        'orderBuilderQty',
-        'orderBuilderType',
-    ];
-    ids.forEach((id) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        if (el.tagName === 'SELECT') {
-            el.value = id === 'orderBuilderType' ? 'continuous' : '';
-        } else {
-            el.value = '';
-        }
-    });
-    updateOrderBuilderPreview();
-}
-
-function addOrderFromBuilder() {
-    const name = document.getElementById('orderBuilderName')?.value || '';
-    if (!name.trim()) {
-        showToast('กรุณากรอกชื่อยา', 'warning');
-        return;
-    }
-    const strength = document.getElementById('orderBuilderStrength')?.value || '';
-    const dose = document.getElementById('orderBuilderDose')?.value || '';
-    const freq = document.getElementById('orderBuilderFreq')?.value || '';
-    const route = document.getElementById('orderBuilderRoute')?.value || '';
-    const timing = document.getElementById('orderBuilderTiming')?.value || '';
-    const qty = document.getElementById('orderBuilderQty')?.value || '';
-    const type = document.getElementById('orderBuilderType')?.value || 'continuous';
-
-    const line = buildOrderLineFromBuilder({
-        name,
-        strength,
-        dose,
-        freq,
-        route,
-        timing,
-        qty,
-    });
-    if (!line) {
-        showToast('ไม่สามารถสร้างบรรทัดคำสั่งยาได้', 'warning');
-        return;
-    }
-
-    const targetId = type === 'oneDay' ? 'inputOneDay_Admit' : 'inputCont_Admit';
-    appendOrderLineToTextarea(targetId, line);
-    syncOrdersStoreFromUI({ source: 'builder' });
-    showToast('เพิ่มคำสั่งยาแล้ว', 'success');
-}
 
 let medsEditorOpen = false;
 
@@ -1922,358 +1787,7 @@ function applyMedsChangesToCurrentList(edits, previousEdits) {
     setMedsContent(lines.join('\n'));
 }
 
-function updateMedsEditRowState(row, input, status) {
-    const original = row.dataset.medOriginal || '';
-    const current = (input.value || '').trim();
-    const isChanged = current && current !== original;
-    row.classList.toggle('meds-edit-changed', isChanged);
-    if (status) status.classList.toggle('hidden', !isChanged);
-}
-
-function enableMedsEdit(row, input) {
-    if (!row || !input || !input.readOnly) return;
-    input.readOnly = false;
-    row.classList.add('meds-edit-active');
-    input.focus();
-    if (typeof input.select === 'function') input.select();
-}
-
-function createMedsEditRow({ index, value, originalValue, labelText, isNew = false }) {
-    const row = document.createElement('div');
-    row.className = 'meds-edit-row';
-    row.dataset.medIndex = String(index);
-    row.dataset.medOriginal = originalValue;
-    if (isNew) row.dataset.medNew = 'true';
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.className = 'meds-edit-input';
-    input.value = value;
-    input.readOnly = true;
-    input.setAttribute('aria-label', isNew ? 'เพิ่มยาใหม่' : `แก้ไขยา: ${labelText || value}`);
-
-    const status = document.createElement('span');
-    status.className = 'meds-edit-status hidden';
-    status.textContent = isNew ? 'ยาใหม่' : 'แก้แล้ว';
-
-    // Action buttons container
-    const actions = document.createElement('div');
-    actions.className = 'meds-edit-actions flex gap-1 mr-2';
-
-    // Increase button (↑)
-    const increaseBtn = document.createElement('button');
-    increaseBtn.type = 'button';
-    increaseBtn.className = 'meds-action-btn meds-action-increase w-8 h-8 rounded flex items-center justify-center bg-blue-50 text-blue-800 border border-blue-200 hover:bg-blue-100';
-    increaseBtn.innerHTML = '<i class="fas fa-arrow-up"></i>';
-    increaseBtn.title = 'เพิ่มขนาดยา';
-    increaseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        applyMedsAction(row, 'increase');
-    });
-
-    // Decrease button (↓)
-    const decreaseBtn = document.createElement('button');
-    decreaseBtn.type = 'button';
-    decreaseBtn.className = 'meds-action-btn meds-action-decrease w-8 h-8 rounded flex items-center justify-center bg-orange-50 text-orange-800 border border-orange-200 hover:bg-orange-100';
-    decreaseBtn.innerHTML = '<i class="fas fa-arrow-down"></i>';
-    decreaseBtn.title = 'ลดขนาดยา';
-    decreaseBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        applyMedsAction(row, 'decrease');
-    });
-
-    // Stop button (X)
-    const stopBtn = document.createElement('button');
-    stopBtn.type = 'button';
-    stopBtn.className = 'meds-action-btn meds-action-stop w-8 h-8 rounded flex items-center justify-center bg-red-50 text-red-800 border border-red-200 hover:bg-red-100';
-    stopBtn.innerHTML = '<i class="fas fa-times"></i>';
-    stopBtn.title = 'หยุดยา';
-    stopBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        applyMedsAction(row, 'stop');
-    });
-
-    // Change button (🔄)
-    const changeBtn = document.createElement('button');
-    changeBtn.type = 'button';
-    changeBtn.className = 'meds-action-btn meds-action-change w-8 h-8 rounded flex items-center justify-center bg-purple-50 text-purple-800 border border-purple-200 hover:bg-purple-100';
-    changeBtn.innerHTML = '<i class="fas fa-exchange-alt"></i>';
-    changeBtn.title = 'เปลี่ยนยา';
-    changeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        enableMedsEdit(row, input);
-    });
-
-    actions.appendChild(increaseBtn);
-    actions.appendChild(decreaseBtn);
-    actions.appendChild(stopBtn);
-    actions.appendChild(changeBtn);
-
-    row.appendChild(actions);
-    row.appendChild(input);
-    row.appendChild(status);
-
-    row.addEventListener('click', () => enableMedsEdit(row, input));
-    input.addEventListener('click', (event) => {
-        if (input.readOnly) {
-            event.preventDefault();
-            enableMedsEdit(row, input);
-        }
-    });
-    input.addEventListener('keydown', (event) => {
-        if (event.key === 'Enter' && input.readOnly) {
-            event.preventDefault();
-            enableMedsEdit(row, input);
-        }
-    });
-    input.addEventListener('input', () => {
-        const detectedAction = detectActionFromText(input.value);
-        const status = row.querySelector('.meds-edit-status');
-        
-        if (detectedAction) {
-            status.classList.remove('hidden');
-            status.textContent = getActionLabel(detectedAction);
-        }
-        
-        updateMedsEditRowState(row, input, status);
-    });
-    input.addEventListener('blur', () => {
-        const trimmed = input.value.trim();
-        if (!trimmed) {
-            if (row.dataset.medNew === 'true') {
-                row.remove();
-                return;
-            }
-            input.value = originalValue;
-        }
-        row.classList.remove('meds-edit-active');
-        updateMedsEditRowState(row, input, status);
-    });
-
-    updateMedsEditRowState(row, input, status);
-    return row;
-}
-
-function switchMedsTab(tabName) {
-    // Hide all tabs
-    document.querySelectorAll('.meds-tab-content').forEach(tab => {
-        tab.classList.add('hidden');
-    });
-    
-    // Remove active state from all buttons
-    document.querySelectorAll('.meds-tab-btn').forEach(btn => {
-        btn.classList.remove('text-amber-600', 'border-amber-600', 'bg-amber-50');
-        btn.classList.add('text-gray-600', 'border-transparent');
-    });
-    
-    // Show selected tab
-    const selectedTab = document.getElementById(`medsTab-${tabName}`);
-    if (selectedTab) {
-        selectedTab.classList.remove('hidden');
-    }
-    
-    // Set active state on selected button
-    const selectedBtn = document.querySelector(`.meds-tab-btn[data-tab="${tabName}"]`);
-    if (selectedBtn) {
-        selectedBtn.classList.remove('text-gray-600', 'border-transparent');
-        selectedBtn.classList.add('text-amber-600', 'border-amber-600', 'bg-amber-50');
-    }
-    
-    // Populate tab content
-    if (tabName === 'history') {
-        renderMedsHistoryTab();
-    } else if (tabName === 'active') {
-        renderMedsActiveTab();
-    }
-}
-
-function renderMedsHistoryTab() {
-    const historyList = document.getElementById('medsHistoryList');
-    const emptyMsg = document.getElementById('medsHistoryEmpty');
-    if (!historyList) return;
-    
-    historyList.innerHTML = '';
-    
-    const allHistory = loadMedsHistoryLog();
-    if (!allHistory || allHistory.length === 0) {
-        if (emptyMsg) emptyMsg.classList.remove('hidden');
-        return;
-    }
-    
-    if (emptyMsg) emptyMsg.classList.add('hidden');
-    
-    // Group by medication
-    const grouped = {};
-    allHistory.forEach(entry => {
-        const medKey = extractMedKey(entry.medName);
-        const groupKey = medKey || (entry.medName || 'unknown');
-        if (!grouped[groupKey]) {
-            grouped[groupKey] = {
-                label: formatMedLabel(entry.medName) || entry.medName || groupKey,
-                entries: [],
-            };
-        }
-        grouped[groupKey].entries.push(entry);
-    });
-    
-    // Render each medication's history
-    Object.keys(grouped).forEach(groupKey => {
-        const group = grouped[groupKey];
-        const history = group.entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        const medCard = document.createElement('div');
-        medCard.className = 'p-3 bg-gray-50 rounded-lg border border-gray-200';
-        
-        const medHeader = document.createElement('div');
-        medHeader.className = 'font-bold text-gray-800 mb-2';
-        medHeader.textContent = group.label || groupKey;
-        medCard.appendChild(medHeader);
-        
-        const historyItems = document.createElement('div');
-        historyItems.className = 'space-y-1';
-        
-        history.slice(0, 10).forEach(entry => {
-            const item = document.createElement('div');
-            item.className = 'text-xs text-gray-700 flex items-start gap-2';
-            
-            const date = new Date(entry.timestamp);
-            const dateStr = date.toLocaleDateString('th-TH', { day: '2-digit', month: 'short', year: '2-digit' });
-            const timeStr = date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-            
-            const actionLabel = getActionLabel(entry.action);
-            item.innerHTML = `
-                <span class="text-gray-500 whitespace-nowrap">${dateStr} ${timeStr}</span>
-                <span class="font-bold text-amber-600">${actionLabel}</span>
-                <span>${entry.details}</span>
-            `;
-            
-            historyItems.appendChild(item);
-        });
-        
-        medCard.appendChild(historyItems);
-        historyList.appendChild(medCard);
-    });
-}
-
-function renderMedsActiveTab() {
-    const activeList = document.getElementById('medsActiveList');
-    const emptyMsg = document.getElementById('medsActiveEmpty');
-    if (!activeList) return;
-    
-    activeList.innerHTML = '';
-    
-    loadMedsHistoryLog();
-    
-    // Get all medications and check if they're stopped
-    const meds = parseCurrentMedsLines();
-    const activeMeds = meds.filter(med => !isMedicationStopped(med));
-    
-    if (activeMeds.length === 0) {
-        if (emptyMsg) emptyMsg.classList.remove('hidden');
-        return;
-    }
-    
-    if (emptyMsg) emptyMsg.classList.add('hidden');
-    
-    activeMeds.forEach(med => {
-        const medCard = document.createElement('div');
-        medCard.className = 'p-3 bg-green-50 rounded-lg border border-green-200';
-        
-        const medName = document.createElement('div');
-        medName.className = 'font-bold text-gray-800';
-        medName.textContent = med;
-        medCard.appendChild(medName);
-        
-        const status = document.createElement('div');
-        status.className = 'text-xs text-green-700 mt-1';
-        status.innerHTML = '<i class="fas fa-check-circle"></i> ใช้อยู่';
-        medCard.appendChild(status);
-        
-        activeList.appendChild(medCard);
-    });
-}
-
-
-function applyMedsAction(row, action) {
-    const input = row.querySelector('.meds-edit-input');
-    const originalValue = row.dataset.medOriginal;
-    
-    // Check for conflicts: warn if medication is already stopped
-    if (action !== 'stop' && isMedicationStopped(originalValue)) {
-        showToast(`⚠️ ยานี้ถูกหยุดแล้ว ตรวจสอบประวัติด้านล่าง`, 'warning');
-        return;
-    }
-    
-    let newValue = input.value;
-
-    switch (action) {
-        case 'increase':
-            newValue = `${originalValue} เพิ่ม`;
-            break;
-        case 'decrease':
-            newValue = `${originalValue} ลด`;
-            break;
-        case 'stop':
-            newValue = `${originalValue} หยุด`;
-            break;
-        case 'change':
-            enableMedsEdit(row, input);
-            return;
-    }
-
-    input.value = newValue;
-    input.readOnly = false;
-    
-    const status = row.querySelector('.meds-edit-status');
-    status.classList.remove('hidden');
-    status.textContent = getActionLabel(action);
-    
-    // Show remaining pills info
-    showMedRemainingBadge(row, originalValue, action);
-    
-    updateMedsEditRowState(row, input, status);
-    saveMedsEditToHistory();
-}
-
-function showMedRemainingBadge(row, medLine, action) {
-    // Remove existing badge
-    const existing = row.querySelector('.med-remaining-badge');
-    if (existing) existing.remove();
-
-    const info = calculateMedRemaining(medLine);
-    if (!info) return;
-
-    const badge = document.createElement('div');
-    badge.className = 'med-remaining-badge mt-1 text-xs rounded-lg px-2 py-1';
-
-    const pills = Number.isInteger(info.remaining) ? info.remaining : info.remaining.toFixed(1);
-    const expiryText = formatThaiShortDate(info.expiryDate);
-
-    if (action === 'stop') {
-        badge.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
-        badge.innerHTML = `<i class="fas fa-stop-circle mr-1"></i>หยุดยา — ยาเหลือ ${pills} เม็ด`;
-    } else {
-        // Home Ward: patient uses existing pills, no new dispensing
-        // Show remaining + how many days left at CURRENT dose + expiry date
-        const isLow = info.daysLeft <= 7;
-        const isOut = info.remaining <= 0;
-        if (isOut) {
-            badge.classList.add('bg-red-50', 'text-red-700', 'border', 'border-red-200');
-            badge.innerHTML = `<i class="fas fa-exclamation-circle mr-1"></i>ยาหมดแล้ว — ต้องนัดมารับยา`;
-        } else {
-            badge.classList.add(
-                isLow ? 'bg-amber-50' : 'bg-blue-50',
-                isLow ? 'text-amber-700' : 'text-blue-700',
-                'border',
-                isLow ? 'border-amber-200' : 'border-blue-200'
-            );
-            const icon = isLow ? 'exclamation-triangle' : 'pills';
-            badge.innerHTML = `<i class="fas fa-${icon} mr-1"></i>เหลือ ${pills} เม็ด · พอใช้ ${info.daysLeft} วัน · ยาหมด ${expiryText}`;
-        }
-    }
-
-    row.appendChild(badge);
-}
+// medsChangeModal UI removed — medication adjustments now handled via medModal tab adjust
 
 // Medication history log per drug
 let medsHistoryLog = [];
@@ -2376,77 +1890,6 @@ function getActionLabel(action) {
         'change': 'เปลี่ยน'
     };
     return labels[action] || 'แก้แล้ว';
-}
-
-function buildMedsChangeList() {
-    const list = document.getElementById('medsChangeList');
-    const empty = document.getElementById('medsChangeEmpty');
-    if (!list) return;
-    list.innerHTML = '';
-    const meds = parseCurrentMedsLines();
-    if (!meds.length) {
-        if (empty) empty.classList.remove('hidden');
-        return;
-    }
-    if (empty) empty.classList.add('hidden');
-
-    const stored = parseMedsChangedData(document.getElementById('medsChangedList')?.value || '');
-    const editsByIndex = new Map(stored.map((item) => [item.index, item]));
-
-    meds.forEach((line, index) => {
-        const edit = editsByIndex.get(index);
-        const value = edit?.updated ? edit.updated : line;
-        const originalValue = edit?.original ? edit.original : line;
-        const row = createMedsEditRow({
-            index,
-            value,
-            originalValue,
-            labelText: line,
-            isNew: false,
-        });
-        list.appendChild(row);
-    });
-}
-
-function addMedsNewRow() {
-    const list = document.getElementById('medsChangeList');
-    if (!list) return;
-    const meds = parseCurrentMedsLines();
-    if (!meds.length) {
-        showToast('กรุณากรอกรายการยาในช่อง "รายการยาที่ใช้อยู่" ก่อนดำเนินการ', 'warning');
-        return;
-    }
-    const existingNewRows = list.querySelectorAll('.meds-edit-row[data-med-new="true"]').length;
-    const nextIndex = meds.length + existingNewRows;
-    const row = createMedsEditRow({
-        index: nextIndex,
-        value: '',
-        originalValue: '',
-        labelText: '',
-        isNew: true,
-    });
-    list.appendChild(row);
-    const input = row.querySelector('input');
-    if (input) enableMedsEdit(row, input);
-    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-}
-
-function collectMedsChangedEdits() {
-    const list = document.getElementById('medsChangeList');
-    if (!list) return [];
-    const rows = list.querySelectorAll('.meds-edit-row');
-    const edits = [];
-    rows.forEach((row) => {
-        const input = row.querySelector('input');
-        const original = row.dataset.medOriginal || '';
-        const medIndex = row.dataset.medIndex;
-        const index = Number.isFinite(Number(medIndex)) ? Number(medIndex) : null;
-        const value = (input?.value || '').trim();
-        if (value && value !== original && index !== null) {
-            edits.push({ index, original, updated: value });
-        }
-    });
-    return edits;
 }
 
 function escapeHtml(value) {
@@ -2645,202 +2088,16 @@ function filterMedsList() {
 }
 
 function openMedsHistoryModal() {
-    const modal = document.getElementById('medsChangeModal');
-    if (!modal) return;
-    
-    // Set modal to review mode
-    setMedsModalMode(false);
-    
-    // Build medication list
-    buildMedsChangeList();
-    
-    // Switch to history tab
-    switchMedsTab('history');
-    
-    // Show modal
-    openModal('medsChangeModal', { focusSelector: null });
+    openModal('medModal');
+    switchMedTab('adjust');
 }
 
 function openMedsChangeModal() {
-    const input = document.getElementById('medsChangedList');
-    const checkbox = document.getElementById('medsChanged');
-    
-    if (!input) return;
-    
-    const meds = parseCurrentMedsLines();
-    if (!meds.length) {
-        if (checkbox) checkbox.checked = false;
-        showToast('กรุณากรอกรายการยาในช่อง "รายการยาที่ใช้อยู่" ก่อนดำเนินการ', 'warning');
-        saveFormState();
-        return;
-    }
-    
-    // Set modal to edit mode
-    setMedsModalMode(true);
-    
-    medsChangedDraft = input.value || '';
-    medsChangedWasChecked = parseMedsChangedData(medsChangedDraft).length > 0;
-    buildMedsChangeList();
-    
-    // Reset to list tab
-    switchMedsTab('list');
-    
-    openModal('medsChangeModal', { focusSelector: '.meds-edit-input' });
+    openModal('medModal');
+    switchMedTab('adjust');
 }
 
-let medsModalEditMode = false;
-
-function setMedsModalMode(isEditMode) {
-    medsModalEditMode = isEditMode;
-    
-    // Update modal title
-    const modalTitle = document.querySelector('#medsChangeModal h2');
-    if (modalTitle) {
-        modalTitle.innerHTML = isEditMode 
-            ? '<i class="fas fa-notes-medical text-amber-600 mr-2"></i>ปรับยา'
-            : '<i class="fas fa-eye text-blue-600 mr-2"></i>ประวัติการปรับยา';
-    }
-    
-    // Show/hide tab navigation
-    const tabNavigation = document.querySelector('#medsChangeModal .flex.border-b');
-    if (tabNavigation) {
-        if (isEditMode) {
-            tabNavigation.classList.remove('hidden');
-        } else {
-            tabNavigation.classList.add('hidden');
-        }
-    }
-    
-    // Show/hide action buttons and save button
-    const actionButtons = document.querySelectorAll('.meds-action-btn');
-    const saveButton = document.getElementById('medsSaveButton');
-    const batchActions = document.querySelector('#medsChangeModal .flex.flex-wrap.gap-2.mb-3');
-    
-    if (isEditMode) {
-        actionButtons.forEach(btn => btn.classList.remove('hidden'));
-        if (saveButton) saveButton.classList.remove('hidden');
-        if (batchActions) batchActions.classList.remove('hidden');
-    } else {
-        actionButtons.forEach(btn => btn.classList.add('hidden'));
-        if (saveButton) saveButton.classList.add('hidden');
-        if (batchActions) batchActions.classList.add('hidden');
-    }
-    
-    // Make inputs read-only in review mode
-    const inputs = document.querySelectorAll('.meds-edit-input');
-    inputs.forEach(input => {
-        input.readOnly = !isEditMode;
-    });
-}
-
-function closeMedsChangeModal({ discard = false, resetCheckbox = false } = {}) {
-    const input = document.getElementById('medsChangedList');
-    const checkbox = document.getElementById('medsChanged');
-    if (!input) return;
-    if (resetCheckbox && checkbox) {
-        if (discard) {
-            removeMedsChangesFromPlan(parseMedsChangedData(medsChangedDraft));
-        }
-        input.value = '';
-        checkbox.checked = false;
-        markDirty();
-        saveFormState();
-    } else if (discard) {
-        input.value = medsChangedDraft;
-        if (checkbox) checkbox.checked = medsChangedWasChecked;
-    }
-    closeModal('medsChangeModal');
-}
-
-function closeMedsChangeModalDiscard() {
-    closeMedsChangeModal({ discard: true });
-}
-
-// Undo/Redo history for medication changes
-let medsEditHistory = [];
-let medsEditHistoryIndex = -1;
-
-function saveMedsEditToHistory() {
-    const currentEdits = parseMedsChangedData(document.getElementById('medsChangedList')?.value || '');
-    medsEditHistory = medsEditHistory.slice(0, medsEditHistoryIndex + 1);
-    medsEditHistory.push(JSON.stringify(currentEdits));
-    medsEditHistoryIndex = medsEditHistory.length - 1;
-}
-
-function undoMedsChanges() {
-    if (medsEditHistoryIndex <= 0) {
-        showToast('ไม่มีสิ่งที่จะ Undo', 'warning');
-        return;
-    }
-    medsEditHistoryIndex--;
-    const previousEdits = JSON.parse(medsEditHistory[medsEditHistoryIndex]);
-    const input = document.getElementById('medsChangedList');
-    if (input) input.value = JSON.stringify(previousEdits);
-    buildMedsChangeList();
-    showToast('Undo สำเร็จ', 'info');
-}
-
-function redoMedsChanges() {
-    if (medsEditHistoryIndex >= medsEditHistory.length - 1) {
-        showToast('ไม่มีสิ่งที่จะ Redo', 'warning');
-        return;
-    }
-    medsEditHistoryIndex++;
-    const nextEdits = JSON.parse(medsEditHistory[medsEditHistoryIndex]);
-    const input = document.getElementById('medsChangedList');
-    if (input) input.value = JSON.stringify(nextEdits);
-    buildMedsChangeList();
-    showToast('Redo สำเร็จ', 'info');
-}
-
-function filterMedsChangeList() {
-    const searchInput = document.getElementById('medsModalSearchInput');
-    const searchTerm = (searchInput?.value || '').toLowerCase();
-    const rows = document.querySelectorAll('.meds-edit-row');
-    
-    rows.forEach(row => {
-        const labelText = row.querySelector('.meds-edit-label')?.textContent || '';
-        const inputValue = row.querySelector('input')?.value || '';
-        const text = `${labelText} ${inputValue}`.toLowerCase();
-        
-        if (searchTerm && !text.includes(searchTerm)) {
-            row.classList.add('hidden');
-        } else {
-            row.classList.remove('hidden');
-        }
-    });
-}
-
-function saveMedsChanges() {
-    const edits = collectMedsChangedEdits();
-    const previousEdits = parseMedsChangedData(medsChangedDraft);
-    setMedsChangedData(edits);
-    const checkbox = document.getElementById('medsChanged');
-    if (checkbox) checkbox.checked = edits.length > 0;
-    applyMedsChangesToCurrentList(edits, previousEdits);
-    applyMedsChangesToPlan(edits, previousEdits);
-    const medsVerified = document.getElementById('medsVerified');
-    if (medsVerified) medsVerified.checked = false;
-    
-    // Log medication changes to history (batch)
-    if (edits.length > 0) {
-        logMedsChangeToHistory(edits);
-        
-        // Log individual medication actions for tracking
-        edits.forEach(edit => {
-            const action = detectActionFromText(edit.updated);
-            if (action) {
-                saveMedsActionToLog(edit.original, action, edit.updated);
-            }
-        });
-    }
-    
-    closeMedsChangeModal();
-    markDirty();
-    renderMedsInlineChanges();
-    saveFormState();
-    if (!edits.length) showToast('ยังไม่มีการปรับยา', 'info');
-}
+// medsChangeModal removed — medication adjustments now handled via medModal tab adjust
 
 const MEDS_HISTORY_LOG_KEY = 'patientLog_medsHistoryLog';
 const MEDS_HISTORY_KEY = 'patientLog_medsHistory';
@@ -2991,9 +2248,74 @@ function openImportExistingCase() {
     openImportModal();
 }
 
+function normalizeImportText(text) {
+    let result = normalizeLineBreaks(text || '');
+    const fixes = [];
+
+    // 1. Old format: separate "Indication: xxx" line → merge into "Dx: ... (xxx)"
+    const indicationLineRegex = /^(\s*Dx(?:\/Indication)?:\s*.+)\n\s*Indication:\s*(.+)$/m;
+    const indicationMatch = result.match(indicationLineRegex);
+    if (indicationMatch) {
+        const dxPart = indicationMatch[1].trimEnd();
+        const indPart = indicationMatch[2].trim();
+        if (indPart && indPart !== '...') {
+            result = result.replace(indicationLineRegex, `${dxPart} (${indPart})`);
+            fixes.push('รวม Indication เข้ากับ Dx');
+        }
+    }
+
+    // 2. Old format: "วันที่รับ:" → "Admit:"
+    const oldAdmitRegex = /^(\s*)วันที่รับ:\s*/m;
+    if (oldAdmitRegex.test(result)) {
+        result = result.replace(oldAdmitRegex, '$1Admit: ');
+        fixes.push('แปลง "วันที่รับ:" → "Admit:"');
+    }
+
+    // 3. Old format: "แพ้ยา:" without "Allergy:" label → add Allergy: prefix
+    const oldAllergyRegex = /^(\s*)แพ้ยา:\s*/m;
+    if (oldAllergyRegex.test(result) && !/^\s*Allergy:/mi.test(result)) {
+        result = result.replace(oldAllergyRegex, '$1Allergy: ');
+        fixes.push('แปลง "แพ้ยา:" → "Allergy:"');
+    }
+
+    // 4. Old meds header variants: "ยาที่ใช้ปัจจุบัน" / "ยาปัจจุบัน" without 💊 → add emoji
+    const oldMedsHeaderRegex = /^(\s*)(ยาที่ใช้ปัจจุบัน|ยาปัจจุบัน|ยาที่ใช้ที่ใช้ปัจจุบัน)(?!\s*\()/m;
+    if (oldMedsHeaderRegex.test(result) && !/💊/.test(result)) {
+        result = result.replace(oldMedsHeaderRegex, '$1💊 Review Treatment');
+        fixes.push('แปลง header ยาเป็น format ใหม่');
+    }
+
+    // 5. Old separator: very long "======..." (>30 chars) → normalize to 14 chars
+    result = result.replace(/^={15,}\s*$/gm, '==============');
+
+    return { text: result, fixes };
+}
+
+function validateImportFields() {
+    const fields = [
+        { id: 'pFName', label: 'ชื่อผู้ป่วย' },
+        { id: 'pDx', label: 'Dx' },
+        { id: 'pAdmitDate', label: 'วันที่รับ' },
+        { id: 'pAllergy', label: 'แพ้ยา' },
+    ];
+    const missing = [];
+    fields.forEach(({ id, label }) => {
+        const val = (document.getElementById(id)?.value || '').trim();
+        if (!val || val === '...') missing.push(label);
+    });
+
+    const medsText = getMedsContent().trim();
+    if (!medsText || medsText === '(ยังไม่มีรายการยา)') {
+        missing.push('รายการยา');
+    }
+
+    return missing;
+}
+
 function processImport(importText) {
     const rawText = importText ?? document.getElementById('importText')?.value ?? '';
-    const text = normalizeLineBreaks(rawText);
+    const normalized = normalizeImportText(rawText);
+    const text = normalized.text;
     if (!text.trim()) return;
     resetCaseForImport();
     handleFullTextImport(text);
@@ -3006,7 +2328,22 @@ function processImport(importText) {
     setHeaderSectionHidden(true, { scroll: true });
     document.getElementById('medsVerified').checked = false;
     updateMedsStatus();
-    showToast("นำเข้าข้อมูลเรียบร้อย! กรุณาตรวจสอบยาอีกครั้ง", "warning");
+
+    const missing = validateImportFields();
+    const fixes = normalized.fixes;
+
+    if (fixes.length) {
+        showToast(`ปรับ format อัตโนมัติ: ${fixes.join(', ')}`, 'info');
+    }
+
+    if (missing.length) {
+        setTimeout(() => {
+            showToast(`⚠️ ข้อมูลอาจไม่ครบ ตรวจสอบ: ${missing.join(', ')}`, 'warning');
+        }, fixes.length ? 2000 : 0);
+    } else if (!fixes.length) {
+        showToast("นำเข้าข้อมูลเรียบร้อย! กรุณาตรวจสอบยาอีกครั้ง", "warning");
+    }
+
     markDirty();
     saveFormState();
 }
@@ -3017,10 +2354,14 @@ function resetImportReviewState() {
 }
 
 function openImportReviewModal(text) {
-    const normalized = normalizeLineBreaks(text || '');
+    const imported = normalizeImportText(text || '');
+    const normalized = imported.text;
     if (!normalized.trim()) {
         showToast('กรุณาวางข้อความก่อน', 'warning');
         return;
+    }
+    if (imported.fixes.length) {
+        showToast(`ปรับ format อัตโนมัติ: ${imported.fixes.join(', ')}`, 'info');
     }
     const preview = buildImportReviewData(normalized);
     pendingImportText = normalized;
@@ -3759,6 +3100,7 @@ function pasteNcdDate(event) {
 function clearNcdInputs() {
     document.querySelectorAll('#ncdModal input[type="checkbox"]').forEach((checkbox) => {
         checkbox.checked = false;
+        checkbox.dispatchEvent(new Event('change'));
     });
     document.querySelectorAll('#ncdModal input[type="text"]').forEach((input) => {
         input.value = '';
@@ -3799,13 +3141,13 @@ function addNcdToOExtra() {
         if (result) parts.push(result);
         items.push(`DR${parts.length ? ` (${parts.join(', ')})` : ''}`);
     }
-    if (getChecked('ncdNeuropathy')) {
-        const date = getDate('ncdNeuropathyDate');
-        const result = getResult('ncdNeuropathyResult');
+    if (getChecked('ncdFoot')) {
+        const date = getDate('ncdFootDate');
+        const result = getResult('ncdFootResult');
         const parts = [];
         if (date) parts.push(date);
         if (result) parts.push(result);
-        items.push(`DPN${parts.length ? ` (${parts.join(', ')})` : ''}`);
+        items.push(`Foot exam${parts.length ? ` (${parts.join(', ')})` : ''}`);
     }
     if (getChecked('ncdCardiovascular')) {
         const date = getDate('ncdCardiovascularDate');
@@ -3815,21 +3157,13 @@ function addNcdToOExtra() {
         if (result) parts.push(result);
         items.push(`CVD${parts.length ? ` (${parts.join(', ')})` : ''}`);
     }
-    if (getChecked('ncdFoot')) {
-        const date = getDate('ncdFootDate');
-        const result = getResult('ncdFootResult');
+    if (getChecked('ncdDental')) {
+        const date = getDate('ncdDentalDate');
+        const result = getResult('ncdDentalResult');
         const parts = [];
         if (date) parts.push(date);
         if (result) parts.push(result);
-        items.push(`Foot exam${parts.length ? ` (${parts.join(', ')})` : ''}`);
-    }
-    if (getChecked('ncdLipid')) {
-        const date = getDate('ncdLipidDate');
-        const result = getResult('ncdLipidResult');
-        const parts = [];
-        if (date) parts.push(date);
-        if (result) parts.push(result);
-        items.push(`DLP${parts.length ? ` (${parts.join(', ')})` : ''}`);
+        items.push(`Dental${parts.length ? ` (${parts.join(', ')})` : ''}`);
     }
 
     if (!items.length) {
@@ -4000,40 +3334,72 @@ function parseMedicationLine(line) {
     // Remove bullet point and normalize * to x
     line = line.replace(/^[•\-\*]\s*/, '').replace(/\*/g, 'x').trim();
     
-    // Try variable dosing pattern: [name]([strength]) [m-n-e] [route] [timing] [#amount]
-    // With #qty first, then without
-    const variablePatternQty = /^(.+?)\((.+?)\)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
-    const variablePatternNoQty = /^(.+?)\((.+?)\)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s*$/;
-    const variableMatch = line.match(variablePatternQty) || line.match(variablePatternNoQty);
-    
+    // Known routes — if timing slot matches a route, swap them
+    const KNOWN_ROUTES = new Set(['po', 'o', 'oral', 'sc', 'iv', 'im', 'sl', 'pr', 'inh', 'top', 'ext', 'neb']);
+    const swapRouteTimingIfNeeded = (r, t) => {
+        const rLow = (r || '').toLowerCase();
+        const tLow = (t || '').toLowerCase();
+        if (!KNOWN_ROUTES.has(rLow) && KNOWN_ROUTES.has(tLow)) return { route: t, timing: r };
+        return { route: r || '', timing: t || '' };
+    };
+
+    // Helper: parse fractional dose
+    const parseDose = (d) => {
+        if (!d) return 0;
+        if (String(d).includes('/')) {
+            const [num, den] = String(d).split('/').map(Number);
+            return den ? num / den : 0;
+        }
+        return parseFloat(d) || 0;
+    };
+
+    // --- Variable dosing: [name]([strength]) [m-n-e] [route] [timing] [#amount] ---
+    // With parentheses
+    const varParenQty = /^(.+?)\((.+?)\)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
+    const varParenNoQty = /^(.+?)\((.+?)\)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s*$/;
+    // Without parentheses: e.g. Mixtard 30-0-22 ac sc #1
+    const varNakedQty = /^([A-Za-zก-๙][A-Za-zก-๙\s.\-]*?)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
+    const varNakedNoQty = /^([A-Za-zก-๙][A-Za-zก-๙\s.\-]*?)\s+([\d.\/]+)-([\d.\/]+)-([\d.\/]+)\s+(\S+)(?:\s+(\S+))?\s*$/;
+
+    const varParenMatch = line.match(varParenQty) || line.match(varParenNoQty);
+    const varNakedMatch = !varParenMatch ? (line.match(varNakedQty) || line.match(varNakedNoQty)) : null;
+    const variableMatch = varParenMatch || varNakedMatch;
+
     if (variableMatch) {
-        const [, name, strength, morning, noon, evening, route, timing, amount] = variableMatch;
-        
-        // Parse each dose (handle fractions)
-        const parseDose = (d) => {
-            if (d.includes('/')) {
-                const [num, den] = d.split('/').map(Number);
-                return num / den;
+        let medName, strength, morning, noon, evening, route, timing, amount;
+        if (varParenMatch) {
+            [, medName, strength, morning, noon, evening, route, timing, amount] = varParenMatch;
+            medName = `${medName.trim()}(${strength})`;
+        } else {
+            // Naked format: no strength in parentheses
+            if (varNakedMatch.length === 8) {
+                // varNakedQty: name, m, n, e, route, timing, amount
+                [, medName, morning, noon, evening, route, timing, amount] = varNakedMatch;
+            } else {
+                // varNakedNoQty: name, m, n, e, route, timing
+                [, medName, morning, noon, evening, route, timing] = varNakedMatch;
             }
-            return parseFloat(d) || 0;
-        };
-        
+            medName = medName.trim();
+            strength = '';
+        }
+
         const morningDose = parseDose(morning);
         const noonDose = parseDose(noon);
         const eveningDose = parseDose(evening);
         const pillsPerDay = morningDose + noonDose + eveningDose;
-        
+        const rt = swapRouteTimingIfNeeded(route, timing);
+
         return {
-            name: `${name}(${strength})`,
-            strength,
+            name: medName,
+            strength: strength || '',
             dose: `${morning}-${noon}-${evening}`,
             dosingType: 'variable',
             morning: morningDose,
             noon: noonDose,
             evening: eveningDose,
             pillsPerDay,
-            route: route || '',
-            timing: timing || '',
+            route: rt.route,
+            timing: rt.timing,
             initialAmount: parseInt(amount) || 0,
             currentAmount: parseInt(amount) || 0,
             startDate: new Date().toISOString().split('T')[0],
@@ -4041,39 +3407,51 @@ function parseMedicationLine(line) {
             id: Date.now().toString()
         };
     }
-    
-    // Try fixed dosing pattern: [name]([strength]) [dose]x[freq] [route] [timing] [#amount]
-    const fixedPatternQty = /^(.+?)\((.+?)\)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
-    const fixedPatternNoQty = /^(.+?)\((.+?)\)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s*$/;
-    const fixedMatch = line.match(fixedPatternQty) || line.match(fixedPatternNoQty);
-    
+
+    // --- Fixed dosing: [name]([strength]) [dose]x[freq] [route] [timing] [#amount] ---
+    // With parentheses
+    const fixParenQty = /^(.+?)\((.+?)\)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
+    const fixParenNoQty = /^(.+?)\((.+?)\)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s*$/;
+    // Without parentheses: e.g. Aspirin 1x1 po pc #30
+    const fixNakedQty = /^([A-Za-zก-๙][A-Za-zก-๙\s.\-]*?)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s+#(\d+)/;
+    const fixNakedNoQty = /^([A-Za-zก-๙][A-Za-zก-๙\s.\-]*?)\s+(.+?)x(\d+)\s+(\S+)(?:\s+(\S+))?\s*$/;
+
+    const fixParenMatch = line.match(fixParenQty) || line.match(fixParenNoQty);
+    const fixNakedMatch = !fixParenMatch ? (line.match(fixNakedQty) || line.match(fixNakedNoQty)) : null;
+    const fixedMatch = fixParenMatch || fixNakedMatch;
+
     if (!fixedMatch) return null;
-    
-    const [, name, strength, dose, freq, route, timing, amount] = fixedMatch;
-    
-    // Calculate dose per time (handle fractions like 1/2)
-    let dosePerTime = 1;
-    if (dose.includes('/')) {
-        const [num, den] = dose.split('/').map(Number);
-        dosePerTime = num / den;
+
+    let fName, fStrength, fDose, fFreq, fRoute, fTiming, fAmount;
+    if (fixParenMatch) {
+        [, fName, fStrength, fDose, fFreq, fRoute, fTiming, fAmount] = fixParenMatch;
+        fName = `${fName.trim()}(${fStrength})`;
     } else {
-        dosePerTime = parseFloat(dose) || 1;
+        if (fixNakedMatch.length === 7) {
+            [, fName, fDose, fFreq, fRoute, fTiming, fAmount] = fixNakedMatch;
+        } else {
+            [, fName, fDose, fFreq, fRoute, fTiming] = fixNakedMatch;
+        }
+        fName = fName.trim();
+        fStrength = '';
     }
-    
-    const frequency = parseInt(freq) || 1;
+
+    let dosePerTime = parseDose(fDose) || 1;
+    const frequency = parseInt(fFreq) || 1;
     const pillsPerDay = dosePerTime * frequency;
-    const initialAmount = parseInt(amount) || 0;
-    
+    const initialAmount = parseInt(fAmount) || 0;
+    const frt = swapRouteTimingIfNeeded(fRoute, fTiming);
+
     return {
-        name: `${name}(${strength})`,
-        strength,
-        dose,
+        name: fName,
+        strength: fStrength || '',
+        dose: fDose,
         dosingType: 'fixed',
         dosePerTime,
         frequency,
         pillsPerDay,
-        route: route || '',
-        timing: timing || '',
+        route: frt.route,
+        timing: frt.timing,
         initialAmount,
         currentAmount: initialAmount,
         startDate: new Date().toISOString().split('T')[0],
@@ -4476,6 +3854,12 @@ function openMedModal() {
     switchMedTab('order');
 }
 
+function openMedModalForAdmit(target) {
+    openMedModal();
+    const targetEl = document.getElementById('medOrderTarget');
+    if (targetEl && target) targetEl.value = target;
+}
+
 function openMedModalAndSwitchToAdjust() {
     openModal('medModal');
     switchMedTab('adjust');
@@ -4486,6 +3870,163 @@ function closeMedModal() {
 }
 
 // ===== NEW 2-Tab Medication System =====
+// ── Med Presets (autofill) ──
+const MED_PRESETS = [
+    // DM — oral
+    { name: 'Metformin', strength: '500', route: 'po', timing: 'pc', group: 'DM' },
+    { name: 'Glipizide', strength: '5', route: 'po', timing: 'ac', group: 'DM' },
+    { name: 'Pioglitazone', strength: '15', route: 'po', timing: 'pc', group: 'DM' },
+    { name: 'Sitagliptin', strength: '100', route: 'po', timing: 'pc', group: 'DM' },
+    { name: 'Empagliflozin', strength: '10', route: 'po', timing: 'pc', group: 'DM' },
+    { name: 'Dapagliflozin', strength: '10', route: 'po', timing: 'pc', group: 'DM' },
+    // DM — insulin
+    { name: 'Mixtard', strength: '', route: 'sc', timing: 'ac', group: 'Insulin' },
+    { name: 'Novomix', strength: '', route: 'sc', timing: 'ac', group: 'Insulin' },
+    { name: 'NPH', strength: '', route: 'sc', timing: 'hs', group: 'Insulin' },
+    { name: 'RI', strength: '', route: 'sc', timing: 'ac', group: 'Insulin' },
+    // HT
+    { name: 'Amlodipine', strength: '10', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Enalapril', strength: '5', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Losartan', strength: '50', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Lercanidipine', strength: '20', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Carvedilol', strength: '12.5', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'HCTZ', strength: '25', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Hydralazine', strength: '25', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Atenolol', strength: '50', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Atenolol', strength: '100', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Propranolol', strength: '10', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Propranolol', strength: '40', route: 'po', timing: 'pc', group: 'HT' },
+    { name: 'Spironolactone', strength: '25', route: 'po', timing: 'pc', group: 'HT' },
+    // Lipid
+    { name: 'Simvastatin', strength: '20', route: 'po', timing: 'hs', group: 'Lipid' },
+    { name: 'Atorvastatin', strength: '40', route: 'po', timing: 'hs', group: 'Lipid' },
+    { name: 'Fenofibrate', strength: '160', route: 'po', timing: 'pc', group: 'Lipid' },
+    // Antiplatelet / Anticoagulant
+    { name: 'Aspirin', strength: '81', route: 'po', timing: 'pc', group: 'Other' },
+    { name: 'Warfarin', strength: '3', route: 'po', timing: 'hs', group: 'Other' },
+    { name: 'Warfarin', strength: '5', route: 'po', timing: 'hs', group: 'Other' },
+    // Gout
+    { name: 'Allopurinol', strength: '100', route: 'po', timing: 'pc', group: 'Other' },
+    { name: 'Colchicine', strength: '0.6', route: 'po', timing: 'pc', group: 'Other' },
+    // Psych
+    { name: 'Risperidone', strength: '2', route: 'po', timing: 'hs', group: 'Psych' },
+    { name: 'Haloperidol', strength: '5', route: 'po', timing: 'hs', group: 'Psych' },
+    { name: 'Quetiapine', strength: '25', route: 'po', timing: 'hs', group: 'Psych' },
+    { name: 'Diazepam', strength: '2', route: 'po', timing: 'hs', group: 'Psych' },
+    { name: 'Lorazepam', strength: '0.5', route: 'po', timing: 'hs', group: 'Psych' },
+    { name: 'Sertraline', strength: '50', route: 'po', timing: 'pc', group: 'Psych' },
+    { name: 'Fluoxetine', strength: '20', route: 'po', timing: 'pc', group: 'Psych' },
+    { name: 'Amitriptyline', strength: '10', route: 'po', timing: 'hs', group: 'Psych' },
+    // GI
+    { name: 'Omeprazole', strength: '20', route: 'po', timing: 'ac', group: 'GI' },
+    { name: 'Domperidone', strength: '10', route: 'po', timing: 'ac', group: 'GI' },
+    // Pain
+    { name: 'Paracetamol', strength: '500', route: 'po', timing: 'prn', group: 'Pain' },
+    { name: 'Tramadol', strength: '50', route: 'po', timing: 'prn', group: 'Pain' },
+    // Supplement
+    { name: 'CaCO3', strength: '1000', route: 'po', timing: 'pc', group: 'Supplement' },
+    { name: 'Ferrous fumarate', strength: '200', route: 'po', timing: 'pc', group: 'Supplement' },
+    { name: 'Folic acid', strength: '5', route: 'po', timing: 'pc', group: 'Supplement' },
+    { name: 'Vitamin B complex', strength: '', route: 'po', timing: 'pc', group: 'Supplement' },
+];
+
+function buildMedPresetLabel(p) {
+    const s = p.strength ? ` (${p.strength})` : '';
+    return `${p.name}${s} ${p.route} ${p.timing}`.trim();
+}
+
+function applyMedPreset(preset) {
+    const setVal = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.value = val; };
+    setVal('medOrderName', preset.name);
+    setVal('medOrderStrength', preset.strength || '');
+    setVal('medOrderRoute', preset.route);
+    setVal('medOrderTiming', preset.timing);
+    updateMedOrderPreview();
+    document.getElementById('medOrderDoseFreq')?.focus();
+}
+
+function initMedPresetSearch() {
+    const nameInput = document.getElementById('medOrderName');
+    if (!nameInput) return;
+
+    let dropdown = document.getElementById('medPresetDropdown');
+    if (!dropdown) {
+        dropdown = document.createElement('div');
+        dropdown.id = 'medPresetDropdown';
+        dropdown.className = 'med-preset-dropdown hidden';
+        nameInput.parentElement.style.position = 'relative';
+        nameInput.parentElement.appendChild(dropdown);
+    }
+
+    const showDropdown = (query) => {
+        const q = (query || '').trim().toLowerCase();
+        let matches = MED_PRESETS;
+        if (q) {
+            matches = MED_PRESETS.filter(p => {
+                const label = `${p.name} ${p.strength} ${p.group}`.toLowerCase();
+                return q.split(/\s+/).every(tok => label.includes(tok));
+            });
+        }
+        if (!matches.length) { dropdown.classList.add('hidden'); return; }
+
+        let currentGroup = '';
+        dropdown.innerHTML = '';
+        matches.forEach((preset, idx) => {
+            if (preset.group !== currentGroup) {
+                currentGroup = preset.group;
+                const groupEl = document.createElement('div');
+                groupEl.className = 'med-preset-group';
+                groupEl.textContent = currentGroup;
+                dropdown.appendChild(groupEl);
+            }
+            const item = document.createElement('div');
+            item.className = 'med-preset-item';
+            item.textContent = buildMedPresetLabel(preset);
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                applyMedPreset(preset);
+                dropdown.classList.add('hidden');
+            });
+            dropdown.appendChild(item);
+        });
+        dropdown.classList.remove('hidden');
+    };
+
+    nameInput.addEventListener('focus', () => showDropdown(nameInput.value));
+    nameInput.addEventListener('input', () => showDropdown(nameInput.value));
+    nameInput.addEventListener('blur', () => {
+        setTimeout(() => dropdown.classList.add('hidden'), 150);
+    });
+
+    nameInput.addEventListener('keydown', (e) => {
+        if (dropdown.classList.contains('hidden')) return;
+        const items = dropdown.querySelectorAll('.med-preset-item');
+        const active = dropdown.querySelector('.med-preset-item.active');
+        let idx = Array.from(items).indexOf(active);
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (active) active.classList.remove('active');
+            idx = (idx + 1) % items.length;
+            items[idx].classList.add('active');
+            items[idx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (active) active.classList.remove('active');
+            idx = idx <= 0 ? items.length - 1 : idx - 1;
+            items[idx].classList.add('active');
+            items[idx].scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            if (active) {
+                e.preventDefault();
+                active.click();
+            }
+        } else if (e.key === 'Escape') {
+            dropdown.classList.add('hidden');
+        }
+    });
+}
+
 // Tab 1: สั่งยา — builds a line and appends to pMedsCont (or orders textarea)
 // Tab 2: ปรับยา — reads pMedsCont, allows edit/stop/add, writes back
 
@@ -4526,13 +4067,13 @@ function updateMedOrderPreview() {
     const timing = document.getElementById('medOrderTiming')?.value.trim() || '';
     const qty = document.getElementById('medOrderQty')?.value || '';
 
-    const strengthPart = strength ? `(${strength})` : '';
+    const strengthPart = strength ? ` (${strength})` : '';
     const timingPart = timing ? ` ${timing}` : '';
     const qtyPart = qty ? ` #${qty}` : '';
 
     const preview = name
         ? `• ${name}${strengthPart} ${doseFreq} ${route}${timingPart}${qtyPart}`
-        : '• [ชื่อยา]([ขนาด]) [dose]x[freq] [route] [timing] #[จำนวน]';
+        : '• [ชื่อยา] ([ขนาด]) [dose]x[freq] [route] [timing] #[จำนวน]';
 
     const el = document.getElementById('medOrderPreview');
     if (el) el.textContent = preview;
@@ -4565,7 +4106,7 @@ function addMedOrder() {
     const qty = document.getElementById('medOrderQty')?.value || '';
     const target = document.getElementById('medOrderTarget')?.value || 'pMedsCont';
 
-    const strengthPart = strength ? `(${strength})` : '';
+    const strengthPart = strength ? ` (${strength})` : '';
     const timingPart = timing ? ` ${timing}` : '';
     const qtyPart = qty ? ` #${qty}` : '';
     const line = `• ${name}${strengthPart} ${doseFreq} ${route}${timingPart}${qtyPart}`.replace(/\s+/g, ' ').trim();
@@ -4591,6 +4132,8 @@ function clearMedOrderInputs() {
     });
     const routeEl = document.getElementById('medOrderRoute');
     if (routeEl) routeEl.value = 'po';
+    const dd = document.getElementById('medPresetDropdown');
+    if (dd) dd.classList.add('hidden');
     updateMedOrderPreview();
 }
 
@@ -4852,16 +4395,45 @@ function saveMedAdjustChanges() {
         return `• ${text}`;
     }).filter(Boolean);
 
-    // Append to A/P
+    // Append to A/P (replace existing med-change lines, then add new ones)
     const apInput = document.getElementById('inputAP');
     if (apInput) {
-        const current = apInput.value.trim();
-        const newValue = current ? `${current}\n${changeTexts.join('\n')}` : changeTexts.join('\n');
-        apInput.value = newValue;
+        const baseLines = (apInput.value || '')
+            .split('\n')
+            .map((line) => line.trimEnd())
+            .filter((line) => line.trim() !== '')
+            .filter((line) => !/^\s*•\s*(ปรับยา|หยุดยา|จ่ายยาเพิ่ม|เพิ่มยาใหม่):/i.test(line));
+        const finalLines = [...baseLines, ...changeTexts];
+        apInput.value = finalLines.join('\n').trimEnd();
         resizeTextareaToContent(apInput);
     }
 
-    // Clear history
+    // Log to medication history
+    const edits = changeTexts.map(text => ({
+        original: '',
+        updated: text
+    }));
+    if (edits.length > 0) {
+        logMedsChangeToHistory(edits);
+    }
+
+    // Update medsChanged checkbox
+    const medsChangedCheckbox = document.getElementById('medsChanged');
+    if (medsChangedCheckbox) medsChangedCheckbox.checked = true;
+
+    // Reset medsVerified
+    const medsVerified = document.getElementById('medsVerified');
+    if (medsVerified) medsVerified.checked = false;
+    updateMedsStatus();
+
+    // Render inline changes in pMedsCont
+    renderMedsInlineChanges();
+
+    // Show medsChangedStatusRow
+    const statusRow = document.getElementById('medsChangedStatusRow');
+    if (statusRow) statusRow.classList.remove('hidden');
+
+    // Clear history panel
     const historyEl = document.getElementById('medAdjustHistory');
     if (historyEl) {
         historyEl.innerHTML = '<p class="text-sm text-gray-500 text-center py-2">ยังไม่มีการเปลี่ยนแปลง</p>';
@@ -4946,6 +4518,17 @@ function saveAdmissionOrdersFromModal() {
         continuousInput.value = document.getElementById('modalInputContinuous').value;
         resizeTextareaToContent(continuousInput);
     }
+
+    // Auto-copy Continuous Orders → pMedsCont as baseline
+    const contMeds = (continuousInput?.value || '').trim();
+    if (contMeds) {
+        setMedsContent(contMeds, { source: 'admit', rawText: contMeds });
+        updateHeaderFromForm();
+        const medsVerified = document.getElementById('medsVerified');
+        if (medsVerified) medsVerified.checked = false;
+        updateMedsStatus();
+        markMedsDirty();
+    }
     
     // Show the admission plan container
     const container = document.getElementById('admitPlan_container');
@@ -4981,20 +4564,13 @@ function closeCurrentMedicationsModal() {
 function saveCurrentMedicationsFromModal() {
     // Save values from modal to actual elements
     const pMedsCont = document.getElementById('pMedsCont');
-    const medsUpdateDate = document.getElementById('medsUpdateDate');
-    const medsUpdateDateLabel = document.getElementById('medsUpdateDateLabel');
     
     if (pMedsCont) {
         pMedsCont.textContent = document.getElementById('modalPMedsCont').value;
     }
     
     const newDate = document.getElementById('modalMedsUpdateDate').value;
-    if (medsUpdateDate) {
-        medsUpdateDate.value = newDate;
-    }
-    if (medsUpdateDateLabel && newDate) {
-        medsUpdateDateLabel.textContent = newDate;
-    }
+    setMedsUpdateDate(newDate, { persist: false });
     
     closeCurrentMedicationsModal();
     showToast('บันทึกรายการยาแล้ว', 'success');
@@ -5043,7 +4619,6 @@ function toggleAdmitMode(forceState = null) {
     const standardAP = document.getElementById('standardAP_container');
     const admitPlan = document.getElementById('admitPlan_container');
     const admitPlanHint = document.getElementById('admitPlanHint');
-    const copyAdmitMedsBtn = document.getElementById('btnCopyAdmitMeds');
 
     // const apTitle = document.getElementById('apSectionTitle'); // Removed
     const planLabel = document.getElementById('planLabel');
@@ -5078,7 +4653,6 @@ function toggleAdmitMode(forceState = null) {
         if (standardAP) standardAP.classList.add('hidden');
         if (admitPlan) admitPlan.classList.remove('hidden');
         if (admitPlanHint) admitPlanHint.classList.remove('hidden');
-        if (copyAdmitMedsBtn) copyAdmitMedsBtn.classList.remove('hidden');
     } else {
         if (btn) {
             btn.classList.add('bg-white', 'text-amber-800', 'border-amber-300');
@@ -5091,7 +4665,6 @@ function toggleAdmitMode(forceState = null) {
         if (standardAP) standardAP.classList.remove('hidden');
         if (admitPlan) admitPlan.classList.add('hidden');
         if (admitPlanHint) admitPlanHint.classList.add('hidden');
-        if (copyAdmitMedsBtn) copyAdmitMedsBtn.classList.add('hidden');
     }
 
     if (newState !== currentVal) markDirty();
@@ -5942,12 +5515,24 @@ function updateAdmissionSummary() {
 }
 
 function refreshTreatmentReview() {
+    // Visual feedback on refresh button
+    const refreshBtn = document.querySelector('[data-action="refreshTreatmentReview"]');
+    if (refreshBtn) {
+        const icon = refreshBtn.querySelector('.fa-sync-alt');
+        if (icon) icon.classList.add('fa-spin');
+        refreshBtn.classList.add('bg-purple-200');
+        setTimeout(() => {
+            if (icon) icon.classList.remove('fa-spin');
+            refreshBtn.classList.remove('bg-purple-200');
+        }, 600);
+    }
+
     const medsListEl = document.getElementById('treatmentReviewMedsList');
     const contOrdersSection = document.getElementById('treatmentReviewContOrders');
     const contListEl = document.getElementById('treatmentReviewContList');
     if (!medsListEl) return;
 
-    // --- Continuous Orders ---
+    // --- Continuous Orders (baseline from admission) ---
     const contTextarea = document.getElementById('inputCont_Admit');
     const contText = (contTextarea?.value || '').trim();
     if (contText && contOrdersSection && contListEl) {
@@ -5961,53 +5546,85 @@ function refreshTreatmentReview() {
     const medLines = getMedsLines();
     if (medLines.length === 0) {
         medsListEl.innerHTML = '<p class="text-sm text-gray-400 text-center py-2">ยังไม่มียา</p>';
+    } else {
+        // Calculate LoS for pill remaining estimation
+        const admitRaw = (document.getElementById('pAdmitDate')?.value || '').trim();
+        const logDateRaw = (document.getElementById('logDate')?.value || '').trim();
+        const admitDateObj = parseThaiDateInput(admitRaw);
+        const logDateObj = parseThaiDateInput(logDateRaw) || new Date();
+        const losDays = calculateLosDays(admitDateObj, logDateObj) || 0;
+
+        medsListEl.innerHTML = medLines.map(line => {
+            const parsed = parseMedicationLine(line);
+            if (!parsed) {
+                return `<div class="flex items-center gap-2 text-sm py-1 px-2 bg-gray-50 rounded border border-gray-200">
+                    <span class="flex-1 font-mono text-gray-700">${escapeHtml(line)}</span>
+                </div>`;
+            }
+
+            const pillsPerDay = parsed.pillsPerDay || 0;
+            const totalAmount = parsed.initialAmount || 0;
+            const pillsUsed = pillsPerDay * losDays;
+            const pillsRemaining = Math.max(0, totalAmount - pillsUsed);
+            const daysRemaining = pillsPerDay > 0 ? Math.floor(pillsRemaining / pillsPerDay) : '∞';
+
+            let badgeColor = 'bg-green-100 text-green-800 border-green-200';
+            if (typeof daysRemaining === 'number') {
+                if (daysRemaining <= 3) badgeColor = 'bg-red-100 text-red-800 border-red-200';
+                else if (daysRemaining <= 7) badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
+            }
+
+            const doseDisplay = parsed.dosingType === 'variable'
+                ? `${parsed.dose}`
+                : `${parsed.dose}x${parsed.frequency}`;
+
+            return `<div class="flex items-center gap-2 text-sm py-1.5 px-2 bg-white rounded border border-gray-200 hover:bg-gray-50">
+                <div class="flex-1 min-w-0">
+                    <span class="font-bold text-gray-900">${escapeHtml(parsed.name)}</span>
+                    <span class="text-gray-600 ml-1">${escapeHtml(doseDisplay)} ${escapeHtml(parsed.route)}${parsed.timing ? ' ' + escapeHtml(parsed.timing) : ''}</span>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <span class="text-xs text-gray-500">เหลือ <b>${pillsRemaining}</b>/${totalAmount}</span>
+                    <span class="inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded border ${badgeColor}">
+                        ${typeof daysRemaining === 'number' ? daysRemaining + ' วัน' : daysRemaining}
+                    </span>
+                </div>
+            </div>`;
+        }).join('');
+    }
+
+    // --- Stopped Medications ---
+    const stoppedSection = document.getElementById('treatmentReviewStopped');
+    const stoppedListEl = document.getElementById('treatmentReviewStoppedList');
+    if (!stoppedSection || !stoppedListEl) return;
+
+    loadMedsHistoryLog();
+    const stopEntries = medsHistoryLog.filter(e => e.action === 'stop');
+    // Deduplicate by medName key — keep latest stop per med
+    const seen = new Map();
+    for (const entry of stopEntries) {
+        const key = extractMedKey(entry.medName) || String(entry.medName || '').toLowerCase();
+        if (!key) continue;
+        const existing = seen.get(key);
+        if (!existing || new Date(entry.timestamp) > new Date(existing.timestamp)) {
+            seen.set(key, entry);
+        }
+    }
+    const uniqueStops = [...seen.values()].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+    if (uniqueStops.length === 0) {
+        stoppedSection.classList.add('hidden');
         return;
     }
 
-    // Calculate LoS for pill remaining estimation
-    const admitRaw = (document.getElementById('pAdmitDate')?.value || '').trim();
-    const logDateRaw = (document.getElementById('logDate')?.value || '').trim();
-    const admitDateObj = parseThaiDateInput(admitRaw);
-    const logDateObj = parseThaiDateInput(logDateRaw) || new Date();
-    const losDays = calculateLosDays(admitDateObj, logDateObj) || 0;
-
-    medsListEl.innerHTML = medLines.map(line => {
-        const parsed = parseMedicationLine(line);
-        if (!parsed) {
-            // Unparseable line — show as-is
-            return `<div class="flex items-center gap-2 text-sm py-1 px-2 bg-gray-50 rounded border border-gray-200">
-                <span class="flex-1 font-mono text-gray-700">${escapeHtml(line)}</span>
-            </div>`;
-        }
-
-        const pillsPerDay = parsed.pillsPerDay || 0;
-        const totalAmount = parsed.initialAmount || 0;
-        const pillsUsed = pillsPerDay * losDays;
-        const pillsRemaining = Math.max(0, totalAmount - pillsUsed);
-        const daysRemaining = pillsPerDay > 0 ? Math.floor(pillsRemaining / pillsPerDay) : '∞';
-
-        // Color coding for remaining days
-        let badgeColor = 'bg-green-100 text-green-800 border-green-200';
-        if (typeof daysRemaining === 'number') {
-            if (daysRemaining <= 3) badgeColor = 'bg-red-100 text-red-800 border-red-200';
-            else if (daysRemaining <= 7) badgeColor = 'bg-amber-100 text-amber-800 border-amber-200';
-        }
-
-        const doseDisplay = parsed.dosingType === 'variable'
-            ? `${parsed.dose}`
-            : `${parsed.dose}x${parsed.frequency}`;
-
-        return `<div class="flex items-center gap-2 text-sm py-1.5 px-2 bg-white rounded border border-gray-200 hover:bg-gray-50">
-            <div class="flex-1 min-w-0">
-                <span class="font-bold text-gray-900">${escapeHtml(parsed.name)}</span>
-                <span class="text-gray-600 ml-1">${escapeHtml(doseDisplay)} ${escapeHtml(parsed.route)}${parsed.timing ? ' ' + escapeHtml(parsed.timing) : ''}</span>
-            </div>
-            <div class="flex items-center gap-1.5 shrink-0">
-                <span class="text-xs text-gray-500">เหลือ <b>${pillsRemaining}</b>/${totalAmount}</span>
-                <span class="inline-flex items-center text-xs font-bold px-1.5 py-0.5 rounded border ${badgeColor}">
-                    ${typeof daysRemaining === 'number' ? daysRemaining + ' วัน' : daysRemaining}
-                </span>
-            </div>
+    stoppedSection.classList.remove('hidden');
+    stoppedListEl.innerHTML = uniqueStops.map(entry => {
+        const label = formatMedLabel(entry.medName) || escapeHtml(entry.medName);
+        const date = entry.logDate || '';
+        return `<div class="flex items-center gap-2 text-sm py-1 px-2 bg-red-50 rounded border border-red-200">
+            <i class="fas fa-times-circle text-red-400 text-xs"></i>
+            <span class="flex-1 font-semibold text-red-800">${escapeHtml(label)}</span>
+            ${date ? `<span class="text-xs text-red-400">${escapeHtml(date)}</span>` : ''}
         </div>`;
     }).join('');
 }
@@ -6031,7 +5648,11 @@ function setHeaderSectionHidden(isHidden, options = {}) {
     if (summary) summary.classList.toggle('hidden', !isHidden);
 
     if (isHidden) {
-        showHistorySection({ scroll });
+        checkHistoryVisibility();
+        if (scroll) {
+            const summary = document.getElementById('admissionSummary');
+            if (summary) summary.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
     } else if (scroll && headerSection) {
         headerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -6223,6 +5844,17 @@ function saveAdmissionNote() {
 }
 
 function saveAdmissionOrders() {
+    // Auto-copy Continuous Orders → pMedsCont as baseline
+    const contMeds = (document.getElementById('inputCont_Admit')?.value || '').trim();
+    if (contMeds) {
+        setMedsContent(contMeds, { source: 'admit', rawText: contMeds });
+        updateHeaderFromForm();
+        const medsVerified = document.getElementById('medsVerified');
+        if (medsVerified) medsVerified.checked = false;
+        updateMedsStatus();
+        markMedsDirty();
+    }
+
     // Save admission orders and hide the container
     updateAdmissionSummary();
     const admitPlan = document.getElementById('admitPlan_container');
@@ -6233,6 +5865,7 @@ function saveAdmissionOrders() {
     if (admitSection) admitSection.classList.add('hidden');
     
     showToast('บันทึก Admission Orders เรียบร้อยแล้ว', 'success');
+    markDirty();
     saveFormState();
 }
 
@@ -6390,6 +6023,7 @@ function buildHistoryReportText() {
 
     const nameRaw = (document.getElementById('pFName')?.value || '').trim();
     const ageRaw = (document.getElementById('pAge')?.value || '').trim();
+    const hnRaw = (document.getElementById('pHN')?.value || '').trim();
     let nameDisplay = nameRaw || '...';
     if (ageRaw) nameDisplay = `${nameDisplay} (${ageRaw} ปี)`;
 
@@ -6402,22 +6036,51 @@ function buildHistoryReportText() {
 
     const admitRaw = (document.getElementById('pAdmitDate')?.value || '').trim();
     const allergyRaw = stripInlineHeaderLabels((document.getElementById('pAllergy')?.value || '').trim());
+    const pmhRaw = (document.getElementById('inputPMH')?.value || '').trim();
+    const medsRaw = getMedsContent();
+    const noteRaw = (document.getElementById('pNote')?.value || '').trim();
 
-    const safe = (value) => (value && value.trim() ? value.trim() : '...');
+    // Calculate LoS
+    const admitDateObj = parseThaiDateInput(admitRaw);
+    const today = new Date();
+    const losDays = admitDateObj ? calculateLosDays(admitDateObj, today) : null;
+    const losText = losDays !== null ? `${losDays} วัน` : '';
 
-    return [
-        'รายงานสรุปจากประวัติอาการเดิม',
-        `ผู้ป่วย: ${safe(nameDisplay)}`,
+    const safe = (value) => (value && value.trim() ? value.trim() : '-');
+
+    const lines = [
+        '📋 สรุปข้อมูลผู้ป่วย (Referral Summary)',
+        '═══════════════════════════',
+        `ชื่อ: ${safe(nameDisplay)}`,
+    ];
+    if (hnRaw) lines.push(`HN: ${hnRaw}`);
+    lines.push(
         `Dx: ${safe(dxCombined)}`,
-        `Admit: ${safe(admitRaw)}`,
+        `Admit: ${safe(admitRaw)}${losText ? ` (LoS ${losText})` : ''}`,
         `Allergy: ${safe(allergyRaw)}`,
-        '',
-        `บันทึกล่าสุด: ${safe(headerLine)}`,
+    );
+    if (pmhRaw && pmhRaw !== '-') lines.push(`PMH: ${safe(pmhRaw)}`);
+    if (noteRaw) lines.push(`Note: ${noteRaw}`);
+
+    lines.push('');
+
+    // Current medications
+    if (medsRaw) {
+        lines.push('💊 Current Medications:');
+        const medLines = medsRaw.split('\n').map(l => l.trim()).filter(l => l);
+        medLines.forEach(l => lines.push(`  ${l}`));
+        lines.push('');
+    }
+
+    lines.push(
+        `📝 บันทึกล่าสุด: ${safe(headerLine)}`,
         formatReportBlock('S', s),
         formatReportBlock('O', o),
         formatReportBlock('A', a),
         formatReportBlock('P', p),
-    ].join('\n');
+    );
+
+    return lines.join('\n');
 }
 
 const REPORT_VIEWS = ['summary', 'table', 'text'];
@@ -6460,12 +6123,80 @@ function parseEntryTimestamp(headerLine) {
     };
 }
 
+const VITAL_RANGES = {
+    bt:   { min: 30, max: 45 },
+    pr:   { min: 20, max: 300 },
+    rr:   { min: 4, max: 60 },
+    spo2: { min: 50, max: 100 },
+    bpSys: { min: 40, max: 300 },
+    bpDia: { min: 20, max: 200 },
+    dtxValue: { min: 10, max: 1000 },
+};
+
+const ABNORMAL_THRESHOLDS = {
+    bt:   { low: 36.0, high: 37.5, critLow: 35.0, critHigh: 38.5 },
+    pr:   { low: 60, high: 100, critLow: 50, critHigh: 120 },
+    rr:   { low: 12, high: 20, critLow: 8, critHigh: 30 },
+    spo2: { low: 95, high: 101, critLow: 90, critHigh: 101 },
+    bpSys: { low: 90, high: 140, critLow: 80, critHigh: 180 },
+    bpDia: { low: 60, high: 90, critLow: 50, critHigh: 110 },
+    dtxValue: { low: 70, high: 180, critLow: 60, critHigh: 250 },
+};
+
+const NORMAL_REFERENCE = {
+    bt: 37.0,
+    pr: 80,
+    rr: 16,
+    spo2: 97,
+    bpSys: 120,
+    bpDia: 80,
+    dtxValue: 100,
+};
+
+function getAbnormalLevel(value, key) {
+    if (value === null || value === undefined || value === '') return 'none';
+    const num = Number(value);
+    if (!Number.isFinite(num)) return 'none';
+    const th = ABNORMAL_THRESHOLDS[key];
+    if (!th) return 'none';
+    if (num <= th.critLow || num >= th.critHigh) return 'critical';
+    if (num < th.low || num > th.high) return 'warning';
+    return 'normal';
+}
+
+function getAbnormalColor(level) {
+    if (level === 'critical') return '#dc2626';
+    if (level === 'warning') return '#f59e0b';
+    return '';
+}
+
+function getTrendArrow(series) {
+    if (!series || series.length < 2) return '';
+    const last = series[series.length - 1];
+    const prev = series[series.length - 2];
+    const diff = last - prev;
+    const threshold = Math.abs(prev) * 0.03 || 0.5;
+    if (diff > threshold) return ' ↑';
+    if (diff < -threshold) return ' ↓';
+    return ' →';
+}
+
 function extractNumericValue(text, pattern) {
     if (!text) return null;
     const match = text.match(pattern);
     if (!match || match[1] === undefined) return null;
     const value = Number(match[1]);
     return Number.isFinite(value) ? value : null;
+}
+
+function sanitizeVital(value, key) {
+    if (value === null || value === undefined) return value;
+    const range = VITAL_RANGES[key];
+    if (!range) return value;
+    const num = Number(value);
+    if (!Number.isFinite(num)) return value;
+    if (num < range.min || num > range.max) return null;
+    return value;
 }
 
 function extractBpValuesFromText(text) {
@@ -6508,9 +6239,9 @@ function parseVitalsFromOSection(oSection) {
         .filter(Boolean);
     const textInline = lines.join(' ');
 
-    const bt = extractNumericValue(textInline, /\bBT\s*=\s*([0-9]+(?:\.[0-9])?)/i);
-    const pr = extractNumericValue(textInline, /\bPR\s*=\s*([0-9]+)/i);
-    const rr = extractNumericValue(textInline, /\bRR\s*=\s*([0-9]+)/i);
+    const bt = extractNumericValue(textInline, /\bBT\s*[:=]\s*([0-9]+(?:\.[0-9]+)?)/i);
+    const pr = extractNumericValue(textInline, /\bPR\s*[:=]\s*([0-9]+)/i);
+    const rr = extractNumericValue(textInline, /\bRR\s*[:=]\s*([0-9]+)/i);
 
     const bpValues = extractBpValuesFromText(raw);
     const bpDisplay = bpValues.join(', ');
@@ -6532,16 +6263,24 @@ function parseVitalsFromOSection(oSection) {
 
     if (!hasAny) return null;
 
+    const sBt = sanitizeVital(bt, 'bt');
+    const sPr = sanitizeVital(pr, 'pr');
+    const sRr = sanitizeVital(rr, 'rr');
+    const sSpo2 = sanitizeVital(spo2, 'spo2');
+    const sBpSys = sanitizeVital(bpParsed?.sys ?? null, 'bpSys');
+    const sBpDia = sanitizeVital(bpParsed?.dia ?? null, 'bpDia');
+    const sDtx = sanitizeVital(dtxValue, 'dtxValue');
+
     return {
-        bt,
-        pr,
-        rr,
-        bpDisplay,
-        bpSys: bpParsed?.sys ?? null,
-        bpDia: bpParsed?.dia ?? null,
-        spo2,
-        dtxRaw,
-        dtxValue,
+        bt: sBt,
+        pr: sPr,
+        rr: sRr,
+        bpDisplay: (sBpSys !== null && sBpDia !== null) ? bpDisplay : '',
+        bpSys: sBpSys,
+        bpDia: sBpDia,
+        spo2: sSpo2,
+        dtxRaw: sDtx !== null ? dtxRaw : '',
+        dtxValue: sDtx,
     };
 }
 
@@ -6587,12 +6326,15 @@ function findLatestEntry(timeline, predicate) {
     return null;
 }
 
-function renderSparkline(container, values, color) {
+function renderSparkline(container, values, color, opts) {
     if (!container) return;
     container.innerHTML = '';
     const width = 120;
     const height = 36;
     const padding = 3;
+    const refValue = opts?.refValue ?? null;
+    const labels = opts?.labels || [];
+    const metricKey = opts?.metricKey || '';
 
     const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
     svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
@@ -6612,9 +6354,26 @@ function renderSparkline(container, values, color) {
         return;
     }
 
-    const min = Math.min(...values);
-    const max = Math.max(...values);
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    if (refValue !== null) {
+        min = Math.min(min, refValue);
+        max = Math.max(max, refValue);
+    }
     const range = max - min || 1;
+
+    if (refValue !== null) {
+        const refY = height - padding - ((refValue - min) / range) * (height - padding * 2);
+        const refLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        refLine.setAttribute('x1', String(padding));
+        refLine.setAttribute('x2', String(width - padding));
+        refLine.setAttribute('y1', String(refY));
+        refLine.setAttribute('y2', String(refY));
+        refLine.setAttribute('stroke', '#d1d5db');
+        refLine.setAttribute('stroke-width', '1');
+        refLine.setAttribute('stroke-dasharray', '3,3');
+        svg.appendChild(refLine);
+    }
 
     const points = values.map((value, index) => {
         const x = padding + (index * (width - padding * 2)) / Math.max(values.length - 1, 1);
@@ -6629,15 +6388,23 @@ function renderSparkline(container, values, color) {
     polyline.setAttribute('points', points.map((pt) => `${pt.x},${pt.y}`).join(' '));
     svg.appendChild(polyline);
 
-    const lastPoint = points[points.length - 1];
-    if (lastPoint) {
+    points.forEach((pt, i) => {
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', String(lastPoint.x));
-        circle.setAttribute('cy', String(lastPoint.y));
-        circle.setAttribute('r', '2.5');
+        circle.setAttribute('cx', String(pt.x));
+        circle.setAttribute('cy', String(pt.y));
+        circle.setAttribute('r', i === points.length - 1 ? '3' : '0');
         circle.setAttribute('fill', color);
+        circle.style.cursor = 'pointer';
+        circle.style.transition = 'r 0.15s';
+        const displayVal = formatMetricValue(values[i], metricKey);
+        const label = labels[i] || '';
+        const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        titleEl.textContent = label ? `${label}: ${displayVal}` : displayVal;
+        circle.appendChild(titleEl);
+        circle.addEventListener('mouseenter', () => circle.setAttribute('r', '4'));
+        circle.addEventListener('mouseleave', () => circle.setAttribute('r', i === points.length - 1 ? '3' : '0'));
         svg.appendChild(circle);
-    }
+    });
 
     container.appendChild(svg);
 }
@@ -6767,11 +6534,18 @@ function renderReportSummary(timeline) {
         { key: 'dtx', label: 'DTX', unit: 'mg%', color: '#2563eb', valueKey: 'dtxValue', displayKey: 'dtxRaw' },
     ];
 
+    const buildTimelineLabels = (tl, predicate) =>
+        tl.filter(predicate).map((e) => {
+            const d = (e.dateText || '').trim();
+            const t = (e.timeText || '').trim();
+            return d && t ? `${d} ${t}` : d || t || '';
+        });
+
     metrics.forEach((metric) => {
-        const series = timeline
-            .map((entry) => entry[metric.valueKey])
-            .filter(isFiniteNumber)
-            .map((value) => Number(value));
+        const filteredEntries = timeline.filter((entry) => isFiniteNumber(entry[metric.valueKey]));
+        const series = filteredEntries.map((entry) => Number(entry[metric.valueKey]));
+        const seriesLabels = buildTimelineLabels(timeline, (e) => isFiniteNumber(e[metric.valueKey]));
+
         const lastEntry = findLatestEntry(timeline, (entry) => {
             const displayVal = metric.displayKey ? entry[metric.displayKey] : entry[metric.valueKey];
             return displayVal !== null && displayVal !== undefined && displayVal !== '';
@@ -6782,32 +6556,79 @@ function renderReportSummary(timeline) {
 
         let bpSeries = null;
         let bpDiaSeries = null;
+        let bpLabels = [];
         if (metric.key === 'bp') {
             const bpEntries = timeline.filter((entry) =>
                 isFiniteNumber(entry.bpSys) && isFiniteNumber(entry.bpDia)
             );
             bpSeries = bpEntries.map((entry) => Number(entry.bpSys));
             bpDiaSeries = bpEntries.map((entry) => Number(entry.bpDia));
+            bpLabels = buildTimelineLabels(timeline, (e) => isFiniteNumber(e.bpSys) && isFiniteNumber(e.bpDia));
         }
+
+        const abnormalKey = metric.key === 'bp' ? 'bpSys' : metric.valueKey;
+        const lastNumeric = series.length ? series[series.length - 1] : null;
+        const abnormalLevel = getAbnormalLevel(lastNumeric, abnormalKey);
+        const abnormalColor = getAbnormalColor(abnormalLevel);
+
+        const trendSeries = metric.key === 'bp' ? bpSeries : series;
+        const trendArrow = getTrendArrow(trendSeries);
+
+        const dataCount = metric.key === 'bp' ? (bpSeries || []).length : series.length;
 
         const card = document.createElement('div');
         card.className = 'report-card';
+        if (abnormalLevel === 'critical') {
+            card.style.borderColor = '#fca5a5';
+            card.style.backgroundColor = '#fef2f2';
+        } else if (abnormalLevel === 'warning') {
+            card.style.borderColor = '#fde68a';
+            card.style.backgroundColor = '#fffbeb';
+        }
 
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between text-xs font-bold';
         header.style.color = metric.color;
-        header.innerHTML = `<span>${metric.label}</span><span>${metric.unit}</span>`;
+        const countBadge = dataCount > 0 ? ` <span class="font-normal text-gray-400">(n=${dataCount})</span>` : '';
+        header.innerHTML = `<span>${metric.label}${countBadge}</span><span>${metric.unit}</span>`;
 
-        const value = document.createElement('div');
-        value.className = 'text-lg font-bold text-gray-900';
-        value.textContent = String(lastDisplay || '-');
+        const valueRow = document.createElement('div');
+        valueRow.className = 'flex items-baseline gap-1';
+
+        const valueEl = document.createElement('div');
+        valueEl.className = 'text-lg font-bold';
+        valueEl.textContent = String(lastDisplay || '-');
+        if (abnormalColor) {
+            valueEl.style.color = abnormalColor;
+        } else {
+            valueEl.classList.add('text-gray-900');
+        }
+
+        const arrowEl = document.createElement('span');
+        arrowEl.className = 'text-sm font-semibold';
+        if (trendArrow.includes('↑')) {
+            arrowEl.style.color = '#dc2626';
+        } else if (trendArrow.includes('↓')) {
+            arrowEl.style.color = '#2563eb';
+        } else {
+            arrowEl.style.color = '#6b7280';
+        }
+        arrowEl.textContent = trendArrow;
+
+        valueRow.appendChild(valueEl);
+        if (trendArrow) valueRow.appendChild(arrowEl);
 
         const sparkline = document.createElement('div');
         sparkline.className = 'report-sparkline';
+        const refValue = NORMAL_REFERENCE[metric.valueKey] ?? null;
         if (metric.key === 'bp') {
             renderSparklineDual(sparkline, bpSeries, bpDiaSeries, metric.color, '#a5b4fc');
         } else {
-            renderSparkline(sparkline, series, metric.color);
+            renderSparkline(sparkline, series, metric.color, {
+                refValue,
+                labels: seriesLabels,
+                metricKey: metric.key,
+            });
         }
 
         const meta = document.createElement('div');
@@ -6841,7 +6662,7 @@ function renderReportSummary(timeline) {
         }
 
         card.appendChild(header);
-        card.appendChild(value);
+        card.appendChild(valueRow);
         card.appendChild(sparkline);
         card.appendChild(meta);
         grid.appendChild(card);
@@ -7054,29 +6875,6 @@ function insertOrderTemplate(type) {
     openOrderTemplateModal();
 }
 
-// --- HELPER: Copy Admit Meds to Header ---
-function copyAdmitMedsToHeader() {
-    const admitMeds = document.getElementById('inputCont_Admit').value.trim();
-    if (!admitMeds) {
-        showToast("ไม่มีข้อมูลในช่อง Continuous Order ให้คัดลอก กรุณากรอกข้อมูลก่อน", "warning");
-        return;
-    }
-
-    // Clear old text and set new text immediately (No confirmation)
-    setMedsContent(admitMeds, { source: 'admit', rawText: admitMeds });
-
-    // Trigger update to render text view
-    updateHeaderFromForm();
-
-    // Reset verification status since meds changed
-    document.getElementById('medsVerified').checked = false;
-    updateMedsStatus();
-    markMedsDirty();
-
-    showToast("อัปเดตรายการยาปัจจุบันเรียบร้อย!");
-    markDirty();
-    saveFormState();
-}
 
 // --- NEW CONFIRMATION SYSTEM (Replaces blocked window.confirm) ---
 function openResetConfirmation() {
@@ -8087,13 +7885,13 @@ function loadTestData() {
         
         // Admission Orders
         const inputOneDay_Admit = document.getElementById('inputOneDay_Admit');
-        if (inputOneDay_Admit) inputOneDay_Admit.value = 'Admit ward 5A';
+        if (inputOneDay_Admit) inputOneDay_Admit.value = '• NSS 1000 ml IV 80 ml/hr';
         
         const inputPlanMx_Admit = document.getElementById('inputPlanMx_Admit');
-        if (inputPlanMx_Admit) inputPlanMx_Admit.value = '- Admit ward 5A\n- วัดความดัน 4 ครั้ง/วัน\n- วัดน้ำตาลก่อนอาหารและก่อนนอน\n- ดูแลแผลติดเชื้อ\n- ปรึกษาแพทย์หากมีไข้';
+        if (inputPlanMx_Admit) inputPlanMx_Admit.value = '• Admit Home Ward\n• DTX premeal + hs\n• วัด BP วันละ 2 ครั้ง\n• แนะนำควบคุมอาหาร งดหวาน มัน เค็ม\n• F/U โทรติดตามอาการทุกวัน';
         
-        // Current Medications
-        const medsText = 'Metformin 500 mg 1 tab หลังอาหารเช้า-เย็น\nGliclazide 80 mg 1 tab หลังอาหารเช้า-เย็น\nAmlodipine 5 mg 1 tab เช้า\nEnalapril 5 mg 1 tab เช้า\nAtorvastatin 20 mg 1 tab ก่อนนอน';
+        // Current Medications (Home Ward format)
+        const medsText = '• Metformin (500) 1x2 po pc #60\n• Glipizide (5) 1x2 po ac #60\n• Amlodipine (5) 1x1 po pc #30\n• Enalapril (5) 1x1 po pc #30\n• Atorvastatin (20) 1x1 po hs #30';
         setMedsContent(medsText);
         
         // Vitals
@@ -8129,7 +7927,7 @@ function loadTestData() {
         // Lab Data (O Extra)
         const inputO_Extra = document.getElementById('inputO_Extra');
         if (inputO_Extra) {
-            inputO_Extra.value = '- HbA1c: 11.2%\n- BUN/Cr: 25/1.2\n- Na/K: 138/4.2\n- WBC: 8,500\n- Hb: 12.5';
+            inputO_Extra.value = '• HbA1c: 11.2%\n• BUN/Cr: 25/1.2\n• Na/K: 138/4.2\n• WBC: 8,500\n• Hb: 12.5';
             resizeTextareaToContent(inputO_Extra);
         }
         
@@ -8155,14 +7953,14 @@ function loadTestData() {
         // Plan
         const inputAP = document.getElementById('inputAP');
         if (inputAP) {
-            inputAP.value = '- ตรวจ HbA1c อีกครั้งใน 3 เดือน\n- คุมน้ำตาลให้อยู่ในเป้า\n- ดูแลแผลติดเชื้อต่อไป\n- นัดตรวจซ้ำพรุ่งนี้เช้า';
+            inputAP.value = '• แนะนำควบคุมอาหาร งดหวาน มัน เค็ม\n• F/U โทรติดตามอาการพรุ่งนี้\n• นัดเจาะ HbA1c ซ้ำใน 3 เดือน';
             resizeTextareaToContent(inputAP);
         }
         
         // Add medication changes
         const medsChangedData = [
-            { index: 0, original: 'Metformin 500 mg 1 tab หลังอาหารเช้า-เย็น', updated: 'Metformin 500 mg 2 tab หลังอาหารเช้า-เย็น (เพิ่มขนาด)' },
-            { index: 1, original: 'Gliclazide 80 mg 1 tab หลังอาหารเช้า-เย็น', updated: 'Gliclazide 80 mg 1/2 tab หลังอาหารเช้า-เย็น (ลดขนาด)' }
+            { index: 0, original: '• Metformin (500) 1x2 po pc #60', updated: '• Metformin (500) 2x2 po pc (เพิ่มขนาด)' },
+            { index: 1, original: '• Glipizide (5) 1x2 po ac #60', updated: '• Glipizide (5) 1/2x2 po ac (ลดขนาด)' }
         ];
         const medsChangedList = document.getElementById('medsChangedList');
         if (medsChangedList) medsChangedList.value = JSON.stringify(medsChangedData);
@@ -8172,7 +7970,7 @@ function loadTestData() {
         
         // Add history data
         const historyPart = document.getElementById('historyPart');
-        if (historyPart) historyPart.value = '17 ธ.ค. 68 08:00\nS: คนไข้มาพบแพทย์เพราะน้ำตาลสูง หายใจเหนื่อย มีปวดท้อง\nO: T 37.5 P 92 R 22 BP 140/90 O2 98% DTX 180\nA: DM คุมไม่ดี ต้องปรับยา\nP: เพิ่ม Dose insulin ยาคุมน้ำตาล\n\n18 ธ.ค. 68 08:30\nS: อาการดีขึ้น หายใจเหนื่อยน้อยลง\nO: T 36.8 P 88 R 20 BP 135/85 O2 98% DTX 165\nA: อาการดีขึ้น\nP: คุมน้ำตาลต่อไป';
+        if (historyPart) historyPart.value = '17 ธ.ค. 68\nS: รับไว้ Home Ward เพราะน้ำตาลสูง HbA1c 11.2\nO: T 36.5 P 88 R 20 BP 130/80 O2 98% DTX AC 180\n• HbA1c: 11.2%, BUN/Cr: 25/1.2\nA: DM คุมไม่ดี\nP: • เริ่มยาตาม Continuous Orders\n• แนะนำควบคุมอาหาร\n• F/U โทรพรุ่งนี้\n\n18 ธ.ค. 68\nS: โทร F/U อาการดีขึ้น กินข้าวได้ วัด DTX เอง 165\nO: BP 135/85 (วัดเอง) DTX AC 165\nA: ดีขึ้น น้ำตาลยังสูง\nP: • คุมอาหารต่อ\n• F/U โทรพรุ่งนี้';
         
         // Enable admit mode
         const isAdmitMode = document.getElementById('isAdmitMode');
