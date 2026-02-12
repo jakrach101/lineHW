@@ -150,7 +150,7 @@
                             <label class="block text-sm text-gray-600 font-semibold mb-1">ชื่อ-นามสกุล</label>
                             <input type="text" id="pFName" data-oninput="updateHeaderFromForm"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                                placeholder="นางสมศรี ดีใจ">
+                                placeholder="นางสมศรี มีสุข">
                         </div>
                         <div class="col-span-4 sm:hidden order-2">
                             <label class="block text-sm text-gray-600 font-semibold mb-1">อายุ (ปี)</label>
@@ -197,13 +197,13 @@
                             <label class="block text-sm text-gray-600 font-semibold mb-1">การวินิจฉัย (Dx)</label>
                             <input type="text" id="pDx" data-oninput="updateHeaderFromForm"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                                placeholder="DM, HT, DLP">
+                                placeholder="เช่น DM (โรคเดียว)">
                         </div>
                         <div class="col-span-6 sm:col-span-5">
                             <label class="block text-sm text-gray-600 font-semibold mb-1">ข้อบ่งชี้ Admit</label>
                             <input type="text" id="pIndication" data-oninput="updateHeaderFromForm"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                                placeholder="HbA1c 11.2, uncontrolled DM">
+                                placeholder="เช่น HbA1c 11.1">
                         </div>
                     </div>
                     <!-- Row 4 mobile & Row 3 desktop: Allergy+หมายเหตุ -->
@@ -221,7 +221,7 @@
                             <label class="block text-sm text-gray-600 font-semibold mb-1">หมายเหตุ</label>
                             <input type="text" id="pNote" data-oninput="updateHeaderFromForm"
                                 class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                                placeholder="เช่น ไม่มีโทรศัพท์ อสม. ให้วัดความดันส่ง">
+                                placeholder="ไม่มีโทรศัพท์ ให้อสม.วัดความดันส่ง">
                         </div>
                     </div>
                 </div>
@@ -349,7 +349,7 @@
                         <div class="flex gap-2">
                             <button type="button" data-action="insertOrderTemplate" data-arg="oneDay"
                                 class="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-200 transition">
-                                แทรกเทมเพลต
+                                เทมเพลต Orders
                             </button>
                             <button type="button" data-action="openMedModalForAdmit" data-arg="inputOneDay_Admit"
                                 class="text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-200 transition">
@@ -367,11 +367,11 @@
                 <div>
                     <div class="flex justify-between items-end mb-1">
                         <label class="block text-base font-bold text-amber-900"><i
-                                class="fas fa-sync-alt mr-1"></i> ยาต่อเนื่อง (Continuous Order)</label>
+                                class="fas fa-sync-alt mr-1"></i> คำสั่งต่อเนื่อง (Continuous Order)</label>
                         <div class="flex gap-2">
                             <button type="button" data-action="insertOrderTemplate" data-arg="continuous"
                                 class="text-xs font-bold bg-amber-100 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg hover:bg-amber-200 transition">
-                                แทรกเทมเพลต
+                                เทมเพลต Orders
                             </button>
                             <button type="button" data-action="openMedModalForAdmit" data-arg="inputCont_Admit"
                                 class="text-xs font-bold bg-blue-100 text-blue-900 border border-blue-200 px-2.5 py-1 rounded-lg hover:bg-blue-200 transition">
@@ -489,6 +489,10 @@
                             <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-capsules text-green-600 mr-1"></i>รายการยาปัจจุบัน (หลังปรับยา)</div>
                             <div id="treatmentReviewMedsList" class="space-y-1"></div>
                         </div>
+                        <div id="treatmentReviewOrders" class="mb-2 hidden">
+                            <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-clipboard-list text-teal-600 mr-1"></i>คำสั่งต่อเนื่อง (ไม่ใช่ยา)</div>
+                            <div id="treatmentReviewOrdersList" class="text-sm text-gray-800 whitespace-pre-line bg-teal-50 rounded p-2 border border-teal-200"></div>
+                        </div>
                         <div id="treatmentReviewStopped" class="mb-1 hidden">
                             <div class="text-xs font-bold text-gray-600 mb-1"><i class="fas fa-ban text-red-500 mr-1"></i>ยาที่เคยหยุด</div>
                             <div id="treatmentReviewStoppedList" class="space-y-1"></div>
@@ -591,9 +595,16 @@
                     <div>
                         <label class="block text-base font-bold text-blue-600 mb-1">S (Subjective -
                             อาการปัจจุบัน):</label>
-                        <textarea id="inputS" rows="2"
-                            class="block w-full border border-gray-300 rounded-lg shadow-sm px-3 py-2 text-base resize-none overflow-hidden"
-                            placeholder="อาการที่คนไข้บอกขณะนี้ หรือ Notify Ward เช่นรู้สึกตัวดี, บ่นปวดแผล"></textarea>
+                        <div class="relative">
+                            <textarea id="inputS" rows="2"
+                                class="block w-full border border-gray-300 rounded-lg shadow-sm px-3 py-2 pr-12 text-base resize-none overflow-hidden"
+                                placeholder="อาการที่คนไข้บอกขณะนี้ หรือ Notify Ward เช่นรู้สึกตัวดี, บ่นปวดแผล"></textarea>
+                            <button type="button" id="speechBtn" data-action="toggleSpeechToText"
+                                class="absolute right-2 top-2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-blue-100 hover:text-blue-600 transition"
+                                title="พูดตามคำบอก">
+                                <i class="fas fa-microphone"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <!-- V/S Helper (Restored White Wrapper, Label Outside) -->
@@ -611,7 +622,7 @@
                                     <input type="text" inputmode="decimal" pattern="[0-9]*[.,]?[0-9]*"
                                         data-numeric="decimal1" id="valT"
                                         class="w-full border-2 border-orange-100 focus:border-orange-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-orange-200"
-                                        placeholder="อุณหภูมิ" aria-label="อุณหภูมิ" data-oninput="validateTemperature:element">
+                                        placeholder="อุณหภูมิ" aria-label="อุณหภูมิ" data-oninput="validateTemperature:element;checkVitalAlert:element">
                                 </div>
                                 <!-- PR: Red -->
                                 <div class="relative">
@@ -620,7 +631,7 @@
                                     </label>
                                     <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int" id="valP"
                                         class="w-full border-2 border-red-100 focus:border-red-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-red-200"
-                                        placeholder="ชีพจร" aria-label="ชีพจร">
+                                        placeholder="ชีพจร" aria-label="ชีพจร" data-oninput="checkVitalAlert:element">
                                 </div>
                                 <!-- RR: Blue -->
                                 <div class="relative">
@@ -629,7 +640,7 @@
                                     </label>
                                     <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int" id="valR"
                                         class="w-full border-2 border-cyan-100 focus:border-cyan-500 rounded-lg h-11 p-2 text-base text-center bg-white focus:ring-2 focus:ring-cyan-200"
-                                        placeholder="หายใจ" aria-label="หายใจ">
+                                        placeholder="หายใจ" aria-label="หายใจ" data-oninput="checkVitalAlert:element">
                                 </div>
                                 <!-- BP: Purple -->
                                 <div>
@@ -639,7 +650,7 @@
                                     <div class="relative">
                                         <input type="text" id="valBP"
                                             class="w-full border-2 border-indigo-100 focus:border-indigo-500 rounded-lg h-11 p-2 pr-12 text-base text-center bg-white focus:ring-2 focus:ring-indigo-200"
-                                            placeholder="ความดัน" aria-label="ความดัน" data-oninput="updateBpCountBadge">
+                                            placeholder="ความดัน" aria-label="ความดัน" data-oninput="updateBpCountBadge;checkVitalAlert:element">
                                         <button type="button" data-action="openBpModal"
                                             class="absolute right-1 top-1/2 -translate-y-1/2 w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-900 hover:bg-indigo-100 flex items-center justify-center shadow-sm"
                                             aria-label="บันทึก BP หลายค่า">
@@ -716,9 +727,9 @@
                                     <div>
                                         <label class="block text-base text-gray-800 font-bold mb-1">SpO2</label>
                                         <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
-                                            id="valSpO2"
+                                            id="valSpO2" maxlength="3"
                                             class="w-full border border-gray-300 rounded-lg h-11 p-2 text-base text-center bg-white"
-                                            placeholder="%">
+                                            placeholder="%" data-oninput="checkVitalAlert:element;capSpO2:element">
                                     </div>
                                     <div class="grid grid-cols-2 gap-2">
                                         <div>
@@ -733,7 +744,7 @@
                                             <input type="text" inputmode="numeric" pattern="[0-9]*" data-numeric="int"
                                                 id="valStool"
                                                 class="w-full border border-gray-300 rounded-lg h-11 p-2 text-base text-center bg-white"
-                                                placeholder="ครั้ง">
+                                                placeholder="ครั้ง" data-oninput="checkVitalAlert:element">
                                         </div>
                                     </div>
                                 </div>
@@ -814,8 +825,8 @@
                                 <label class="block text-base font-bold text-green-800"><i class="fas fa-pills mr-1"></i>
                                     รายการยาปัจจุบัน</label>
                                 <span id="medsStatusBadge"
-                                    class="text-sm px-3 py-1 rounded-full bg-red-100 text-red-700 font-bold border border-red-200 shadow-sm">
-                                    <i class="fas fa-exclamation-circle"></i> รอการตรวจสอบ
+                                    class="text-sm px-3 py-1 rounded-full bg-green-100 text-green-800 font-bold border border-green-200 shadow-sm">
+                                    <i class="fas fa-check-circle"></i> ยาเป็นปัจจุบัน
                                 </span>
                             </div>
 
@@ -828,15 +839,15 @@
                             <!-- Search and Actions -->
                             <div class="flex gap-2 mb-2">
                                 <input type="text" id="medsSearchInput"
-                                    class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
+                                    class="flex-1 min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-sm"
                                     placeholder="ค้นหายา..."
                                     data-oninput="filterMedsList">
                                 <button type="button" data-action="openMedSummaryModal"
-                                    class="bg-purple-50 text-purple-800 border border-purple-200 px-3 py-2 rounded-lg hover:bg-purple-100 transition text-sm font-bold flex items-center gap-1">
+                                    class="shrink-0 bg-teal-50 text-teal-800 border border-teal-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-teal-100 transition text-xs sm:text-sm font-bold flex items-center gap-1 whitespace-nowrap">
                                     <i class="fas fa-pills"></i> สรุปยา
                                 </button>
                                 <button type="button" data-action="openMedsHistoryModal"
-                                    class="bg-blue-50 text-blue-800 border border-blue-200 px-3 py-2 rounded-lg hover:bg-blue-100 transition text-sm font-bold flex items-center gap-1">
+                                    class="shrink-0 bg-blue-50 text-blue-800 border border-blue-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-blue-100 transition text-xs sm:text-sm font-bold flex items-center gap-1 whitespace-nowrap">
                                     <i class="fas fa-history"></i> ดูประวัติ
                                 </button>
                             </div>
@@ -845,6 +856,19 @@
                             <div id="pMedsCont"
                                 class="w-full border border-gray-200 bg-gray-50 rounded-lg p-3 text-base placeholder-gray-400 font-mono text-gray-700 max-h-40 overflow-y-auto"
                                 readonly></div>
+
+                            <!-- Non-med continuous orders -->
+                            <div class="mt-3">
+                                <label class="block text-sm text-gray-700 mb-1">
+                                    <i class="fas fa-clipboard-list text-green-600 mr-1"></i>คำสั่งต่อเนื่อง (ไม่ใช่ยา)
+                                </label>
+                                <textarea id="pOrdersCont" rows="2"
+                                    class="w-full border border-gray-200 bg-gray-50 rounded-lg p-3 text-base font-mono text-gray-700 resize-none overflow-hidden"
+                                    placeholder="เช่น DTX premeal + hs, วัด BP วันละ 2 ครั้ง, Restrict salt"
+                                    data-autobullet="true" data-auto-resize="true"
+                                    data-onfocus="seedBulletOnFocus:event"
+                                    data-onkeydown="handleBulletKeydown:event"></textarea>
+                            </div>
                         </div>
 
                         <!-- Plan Textarea -->
@@ -853,12 +877,12 @@
                                 <label class="block text-base font-bold text-blue-600 mb-0"><i class="fas fa-clipboard-list mr-1"></i>
                                     Plan (การเปลี่ยนแปลง + plan อื่นๆ)</label>
                                 <div class="flex items-center gap-2">
-                                    <button type="button" data-action="openMedModal"
-                                        class="bg-purple-50 text-purple-800 border border-purple-200 px-3 py-2 rounded-lg hover:bg-purple-100 transition text-sm font-bold flex items-center gap-1">
+                                    <button type="button" data-action="openMedModalForPlan"
+                                        class="shrink-0 bg-purple-50 text-purple-800 border border-purple-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-purple-100 transition text-xs sm:text-sm font-bold flex items-center gap-1 whitespace-nowrap">
                                         <i class="fas fa-pills"></i> สั่งยา
                                     </button>
                                     <button type="button" data-action="openMedModalAndSwitchToAdjust"
-                                        class="bg-amber-50 text-amber-800 border border-amber-200 px-3 py-2 rounded-lg hover:bg-amber-100 transition text-sm font-bold flex items-center gap-1">
+                                        class="shrink-0 bg-amber-50 text-amber-800 border border-amber-200 px-2 sm:px-3 py-2 rounded-lg hover:bg-amber-100 transition text-xs sm:text-sm font-bold flex items-center gap-1 whitespace-nowrap">
                                         <i class="fas fa-pills"></i> ปรับยา
                                     </button>
                                 </div>
@@ -874,21 +898,8 @@
                             </div>
                         </div>
 
-                        <!-- Verification Checkbox -->
-                        <div class="flex items-center bg-gray-50 p-2 rounded border border-gray-200 hover:bg-white cursor-pointer transition select-none mt-3"
-                            data-action="toggleMedsCheckFromRow" data-pass="event">
-                            <input type="checkbox" id="medsVerified"
-                                class="w-6 h-6 text-green-600 rounded focus:ring-green-500 border-gray-300 mr-3 cursor-pointer"
-                                data-onchange="updateMedsStatus:event" aria-describedby="medsVerifiedHelp">
-                            <div class="flex-1">
-                                <label for="medsVerified" class="text-base font-bold text-gray-800 cursor-pointer">
-                                    ฉันได้ตรวจสอบแล้วว่ารายการยาเป็นปัจจุบัน
-                                </label>
-                                <p id="medsVerifiedHelp" class="text-xs text-gray-500 mt-1">
-                                    <i class="fas fa-info-circle mr-1"></i>ติ๊กเพื่อยืนยันว่ารายการยาถูกต้องและเป็นปัจจุบัน
-                                </p>
-                            </div>
-                        </div>
+                        <!-- Auto Meds Status (hidden checkbox kept for backward compat) -->
+                        <input type="checkbox" id="medsVerified" class="hidden" checked title="medsVerified">
 
                         <div id="admitPlanHint"
                             class="hidden mt-2 bg-amber-50 border border-amber-200 border-l-4 border-l-amber-600 text-amber-900 rounded-lg px-3 py-2 text-base font-bold flex items-center gap-2">
@@ -1855,7 +1866,7 @@
                         <label class="block text-sm text-gray-600 font-semibold mb-1">ชื่อ-นามสกุล</label>
                         <input type="text" id="modalPFName"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                            placeholder="นางสมศรี ดีใจ">
+                            placeholder="นางสมศรี มีสุข">
                     </div>
                 </div>
                 <div class="grid grid-cols-12 gap-3">
@@ -1869,13 +1880,13 @@
                         <label class="block text-sm text-gray-600 font-semibold mb-1">การวินิจฉัย (Dx)</label>
                         <input type="text" id="modalPDx"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                            placeholder="DM, HT, DLP">
+                            placeholder="เช่น DM (โรคเดียว)">
                     </div>
                     <div class="col-span-5">
                         <label class="block text-sm text-gray-600 font-semibold mb-1">ข้อบ่งชี้ Admit</label>
                         <input type="text" id="modalPIndication"
                             class="w-full border border-gray-300 rounded-lg px-3 py-2 h-11 text-base"
-                            placeholder="HbA1c 11.2, uncontrolled DM">
+                            placeholder="เช่น HbA1c 11.1">
                     </div>
                 </div>
                 <div>
@@ -1989,7 +2000,7 @@
                 <div>
                     <div class="flex justify-between items-center mb-2">
                         <label class="block text-base font-bold text-orange-900">
-                            <i class="fas fa-sync-alt mr-1"></i>ยาต่อเนื่อง (Continuous Order)
+                            <i class="fas fa-sync-alt mr-1"></i>คำสั่งต่อเนื่อง (Continuous Order)
                         </label>
                         <div class="flex gap-2">
                             <button type="button" data-action="openOrderTemplateModal" data-arg="continuous"
@@ -2161,7 +2172,7 @@
                     <div id="viewOneDay" class="text-sm text-gray-900 bg-amber-50 rounded-lg p-3 border border-amber-200 whitespace-pre-line min-h-[2rem] font-mono">-</div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-500 mb-0.5"><i class="fas fa-sync-alt text-amber-600 mr-1"></i>ยาต่อเนื่อง (Continuous Order)</label>
+                    <label class="block text-xs font-bold text-gray-500 mb-0.5"><i class="fas fa-sync-alt text-amber-600 mr-1"></i>คำสั่งต่อเนื่อง (Continuous Order)</label>
                     <div id="viewContinuous" class="text-sm text-gray-900 bg-amber-50 rounded-lg p-3 border border-amber-200 whitespace-pre-line min-h-[2rem] font-mono">-</div>
                 </div>
                 <div>
@@ -2323,17 +2334,9 @@
                         <p class="text-sm text-gray-500 text-center py-4">กำลังโหลดรายการยา...</p>
                     </div>
 
-                    <div class="mt-3 pt-3 border-t border-amber-200">
-                        <div class="flex gap-2">
-                            <input type="text" id="medAdjustNewMed"
-                                class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm"
-                                placeholder="เพิ่มยาใหม่ เช่น • Amlodipine (5) 1x1 po pc #30">
-                            <button type="button" data-action="addNewMedFromAdjust"
-                                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold text-sm whitespace-nowrap">
-                                <i class="fas fa-plus mr-1"></i>เพิ่ม
-                            </button>
-                        </div>
-                    </div>
+                    <p class="mt-3 pt-3 border-t border-amber-200 text-xs text-gray-500">
+                        <i class="fas fa-info-circle mr-1"></i>ต้องการเพิ่มยาใหม่? ใช้ Tab <strong>สั่งยา</strong> ด้านบน
+                    </p>
                 </div>
 
                 <!-- Change History -->
@@ -2351,8 +2354,8 @@
                         class="flex-1 rounded-lg px-5 py-3 bg-amber-600 text-white hover:bg-amber-700 font-bold">
                         <i class="fas fa-save mr-1"></i>บันทึกการปรับยา
                     </button>
-                    <button type="button" data-action="closeMedModal"
-                        class="rounded-lg border border-gray-300 px-5 py-3 bg-white text-gray-800 hover:bg-gray-50 font-bold">ปิด</button>
+                    <button type="button" data-action="cancelMedAdjust"
+                        class="rounded-lg border border-gray-300 px-5 py-3 bg-white text-gray-800 hover:bg-gray-50 font-bold">ยกเลิก</button>
                 </div>
             </div>
             <!-- End Tab 2 -->
